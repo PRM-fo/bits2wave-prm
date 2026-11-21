@@ -1,0 +1,4096 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SoundDrop · Files travel on sound</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=Hanken+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0f24;--bg2:#121a3a;--fg:#f3efe6;--mut:#9aa3c7;--v:#8b5cf6;--p:#ec4899;--c:#22d3ee;--ln:rgba(243,239,230,.16);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+html{scroll-behavior:smooth;scroll-padding-top:70px;height:100%}*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.55 "Hanken Grotesk",system-ui,sans-serif;overflow-x:clip}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 40%,transparent 35%,rgba(10,15,36,.75))}
+header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:16px clamp(16px,4vw,44px);backdrop-filter:blur(10px);background:linear-gradient(var(--bg),transparent)}
+.brand{font:800 20px Syne,sans-serif;letter-spacing:-.02em;color:var(--fg);text-decoration:none;display:flex;gap:10px;align-items:center}
+.brand i{width:14px;height:14px;border-radius:50%;background:conic-gradient(var(--v),var(--p),var(--c),var(--v));animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+nav{display:flex;gap:clamp(12px,2.4vw,30px);align-items:center}
+nav a{color:var(--mut);text-decoration:none;font-weight:500;font-size:15px;transition:color .2s}nav a:hover,nav a:focus-visible{color:var(--fg)}
+#snd{font:inherit;font-size:14px;font-weight:700;color:var(--fg);background:none;border:1px solid var(--ln);border-radius:99px;padding:7px 14px;cursor:pointer}
+#snd[aria-pressed=true]{border-color:var(--c);box-shadow:0 0 18px rgba(34,211,238,.35)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--c);outline-offset:3px}
+@media(max-width:760px){nav a{display:none}}
+section,footer{position:relative;z-index:5;padding:clamp(80px,12vh,150px) clamp(18px,5vw,64px)}
+.hero{min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:9vh}
+h1,h2{font-family:Syne,sans-serif;font-weight:800;letter-spacing:-.035em;line-height:.95;margin:0}
+h1{font-size:clamp(52px,11.5vw,190px)}h2{font-size:clamp(36px,6.4vw,100px)}
+.ch{display:inline-block;opacity:0;transform:translateY(70%) rotateX(-80deg);animation:ch .9s cubic-bezier(.2,.8,.2,1) forwards;transform-origin:50% 100%}
+@keyframes ch{to{opacity:1;transform:none}}
+.lede{max-width:46ch;color:var(--mut);font-size:clamp(17px,1.6vw,21px);margin:28px 0 0}
+.cta{display:inline-flex;align-items:center;gap:12px;margin-top:34px;padding:16px 28px;border-radius:99px;background:linear-gradient(120deg,var(--v),var(--p));color:#fff;font-weight:700;text-decoration:none;box-shadow:0 14px 40px -10px rgba(236,72,153,.6);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.cta:hover{transform:translateY(-3px) scale(1.03)}
+.mq{overflow:hidden;border-block:1px solid var(--ln);padding:18px 0;position:relative;z-index:5;background:rgba(10,15,36,.6);backdrop-filter:blur(6px)}
+.mq div{display:flex;gap:56px;width:max-content;animation:mq 30s linear infinite;font:800 clamp(24px,3.4vw,44px) Syne,sans-serif;letter-spacing:-.02em;white-space:nowrap}
+.mq span:nth-child(3n+2){color:transparent;-webkit-text-stroke:1px var(--fg)}
+@keyframes mq{to{transform:translateX(-50%)}}
+.cabin{min-height:130vh}.cabin .t{max-width:min(520px,100%)}
+.facts{display:grid;gap:26px;margin-top:44px}.facts p{margin:0;padding-left:20px;border-left:2px solid var(--c);color:var(--mut)}.facts b{display:block;color:var(--fg);font:700 20px Syne,sans-serif;margin-bottom:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:22px;margin-top:56px;perspective:1100px}
+.uc{transform-style:preserve-3d;transition:transform .25s ease-out;border:1px solid var(--ln);border-radius:26px;background:rgba(18,26,58,.72);backdrop-filter:blur(8px);padding:14px 14px 24px}
+.slot{aspect-ratio:4/3;border-radius:16px;border:1.5px dashed rgba(243,239,230,.35);display:grid;place-items:center;text-align:center;padding:16px;color:var(--mut);font-size:14px;background:repeating-linear-gradient(135deg,rgba(139,92,246,.1) 0 12px,transparent 12px 24px);transform:translateZ(40px);overflow:hidden;position:relative}
+.slot svg{width:64px;height:64px;stroke:var(--c);fill:none;stroke-width:1.4;display:block;margin:0 auto 8px;animation:fl 4s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-8px) rotate(4deg)}}
+.uc h3{font:800 26px Syne,sans-serif;margin:22px 8px 6px;letter-spacing:-.02em;transform:translateZ(30px)}.uc p{margin:0 8px;color:var(--mut);font-size:15.5px}
+.studio{text-align:center}.studio h2,.studio .lede{margin-inline:auto}
+.dev{width:min(100%,520px);margin:56px auto 0;border-radius:36px;padding:10px;background:linear-gradient(140deg,var(--v),var(--p),var(--c));box-shadow:0 40px 90px -20px rgba(139,92,246,.6)}
+.dev iframe{display:block;width:100%;height:min(860px,88svh);min-height:640px;border:0;border-radius:28px;background:#f4f0ff}
+.team .grid{perspective:none}
+.m{text-align:center}.av{width:100%;aspect-ratio:1;border-radius:50%;border:1.5px dashed rgba(243,239,230,.35);display:grid;place-items:center;color:var(--mut);font-size:13px;max-width:200px;margin:0 auto;background:radial-gradient(circle at 30% 30%,rgba(236,72,153,.22),rgba(34,211,238,.08));transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.m:hover .av{transform:rotate(-6deg) scale(1.05)}.m b{display:block;font:800 20px Syne,sans-serif;margin-top:16px}.m span{color:var(--mut);font-size:14px}
+footer{border-top:1px solid var(--ln);background:rgba(10,15,36,.85);display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;color:var(--mut);font-size:14px;padding-block:36px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ch{opacity:1;transform:none}}
+
+.scene{height:260vh;padding:0}
+.stick{position:sticky;top:0;height:100svh;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:30px;padding:90px clamp(18px,5vw,64px) 30px}
+.stick .t{max-width:560px}.stick h2{font-size:clamp(34px,5.2vw,82px)}
+.tog{display:flex;gap:8px;margin-top:26px}.tog button{font:inherit;font-weight:700;color:var(--fg);background:rgba(18,26,58,.8);border:1px solid var(--ln);border-radius:99px;padding:10px 20px;cursor:pointer}
+.tog button[aria-pressed=true]{background:linear-gradient(120deg,var(--v),var(--p));border-color:transparent}
+.phone{justify-self:center;width:272px;height:540px;border-radius:40px;border:9px solid #1b2350;background:#0d1330;box-shadow:0 0 0 1px var(--ln),0 40px 80px -20px rgba(34,211,238,.4);padding:34px 14px 14px;position:relative;overflow:hidden}
+.phone:before{content:"";position:absolute;top:10px;left:50%;width:70px;height:16px;margin-left:-35px;border-radius:9px;background:#1b2350}
+.phone.on{animation:buzz .5s .1s}
+@keyframes buzz{20%{transform:rotate(-3deg) translateX(-4px)}40%{transform:rotate(3deg) translateX(4px)}60%{transform:rotate(-2deg)}80%{transform:rotate(2deg)}}
+.a{opacity:0;transform:translateY(18px);transition:opacity .5s,transform .5s;transition-delay:0s}
+.phone.on .a{opacity:1;transform:none;transition-delay:calc(var(--i,0)*.2s + .3s)}
+.stat{font-size:12px;color:var(--mut);display:flex;gap:8px;align-items:center;margin-bottom:12px}.stat i{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.n{border-radius:18px;padding:14px;background:linear-gradient(135deg,rgba(139,92,246,.45),rgba(236,72,153,.35));margin-bottom:14px}.n.w{background:linear-gradient(135deg,rgba(245,158,11,.5),rgba(236,72,153,.4))}
+.n b{display:block;font:800 18px Syne,sans-serif;line-height:1.15}.n span{font-size:13.5px;color:#e5e1f5;display:block;margin-top:6px}
+.phone ul{list-style:none;margin:0;padding:0;display:grid;gap:9px;font-size:13.5px}
+.phone li{padding:10px 12px;border-radius:12px;background:rgba(243,239,230,.07)}
+.dd{display:grid;gap:12px}.dd h4{margin:0 0 6px;font:800 15px Syne,sans-serif}.dd div:first-child h4{color:#34d399}.dd div:last-child h4{color:#fb7185}
+.dd li{padding:7px 10px 7px 30px;position:relative;font-size:12.5px;line-height:1.3}.dd li:before{position:absolute;left:10px;font-weight:800}
+#dos li:before{content:"\2713";color:#34d399}#donts li:before{content:"\2715";color:#fb7185}
+.ic{display:inline-block;font-size:12px;font-weight:700;color:var(--c);border:1px solid var(--c);border-radius:99px;padding:3px 11px;margin:0 8px 8px}
+@media(max-width:760px){.stick{grid-template-columns:1fr;align-content:start;gap:14px;padding-top:76px}.phone{transform-origin:top center;width:236px;height:400px;padding-top:28px}.phone:not(.on){transform:none}.stick h2{font-size:30px}.stick .lede{font-size:15px;margin-top:12px}.tog{margin-top:14px}.n{padding:10px;margin-bottom:8px}.n span{font-size:12px}.dd li{padding-block:4px;font-size:11.5px}}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:40px 28px;max-width:1120px;margin:56px auto 0}.pair .dev{margin:0;width:100%}.cap{font:800 30px Syne,sans-serif;letter-spacing:-.02em;margin:0}.capd{color:var(--mut);margin:6px 0 20px;font-size:15px}.pair .dev iframe{min-height:600px}
+.tm .m{border:1px solid var(--ln);border-radius:24px;background:rgba(18,26,58,.72);backdrop-filter:blur(8px);padding:44px 20px;transition:transform .35s cubic-bezier(.34,1.56,.64,1),border-color .2s}.tm .m:hover{transform:translateY(-6px);border-color:var(--c)}.tm .m b{margin:0;font-size:clamp(20px,2vw,26px);line-height:1.2}
+
+.stick .t{padding:30px 32px;border-radius:28px;background:linear-gradient(135deg,rgba(8,12,30,.9),rgba(8,12,30,.68));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(243,239,230,.2);box-shadow:0 20px 60px -20px rgba(0,0,0,.7)}
+.stick .lede{color:#e3e7fb;text-shadow:0 1px 8px rgba(0,0,0,.6)}.stick h2{text-shadow:0 2px 14px rgba(0,0,0,.6)}
+.phone{width:224px!important;height:452px!important;padding:30px 12px 12px!important;border-width:8px!important}
+.n b{font-size:16px!important}.n span{font-size:12.5px!important}.phone li{font-size:12px!important;padding:8px 10px!important}.dd li{font-size:11.5px!important}.stat{font-size:11px!important}
+@media(max-width:760px){.stick .t{padding:16px 18px;border-radius:20px}.phone{width:196px!important;height:370px!important}}
+.stick .t{padding:18px 20px!important;max-width:380px!important;background:linear-gradient(135deg,rgba(8,12,30,.6),rgba(8,12,30,.34))!important;backdrop-filter:blur(4px)!important;-webkit-backdrop-filter:blur(4px)!important;align-self:start;margin-top:2vh}.stick h2{font-size:clamp(26px,3.2vw,46px)!important;line-height:1.02}.stick .lede{font-size:15px!important;margin-top:12px!important}.stick .tog{margin-top:14px}@media(max-width:760px){.stick .t{max-width:none!important;padding:12px 14px!important;margin-top:0}.stick h2{font-size:24px!important}.stick .lede{font-size:13px!important;margin-top:8px!important}}h1{font-size:clamp(32px,9vw,160px)!important;white-space:nowrap}h1 .ch{white-space:pre}</style></head><body>
+<canvas id="gl" aria-hidden="true"></canvas><div class="vig"></div>
+<header><a class="brand" href="#top"><i></i>SoundDrop</a>
+<nav><a href="#airport">Airport</a><a href="#disaster">Emergency</a><a href="#studio">Studio</a><a href="#improve">Roadmap</a><a href="#team">Team</a>
+</nav></header>
+
+<section class="hero" id="top">
+<h1 id="h1" aria-label="Files travel on sound.">Files travel<br>on sound.</h1>
+<p class="lede">Send a file, a message or an alert to the next device using only a speaker and a microphone. No signal, no pairing, no cables.</p>
+<div><a class="cta" href="#studio">Open the studio</a></div>
+</section>
+<div class="mq" aria-hidden="true"><div><span>Cabin crew calls</span><span>Gate changes</span><span>Safety briefings</span><span>Boarding passes</span><span>Evacuation notices</span><span>Cabin crew calls</span><span>Gate changes</span><span>Safety briefings</span><span>Boarding passes</span><span>Evacuation notices</span></div></div>
+
+<section class="scene" id="airport"><div class="stick">
+<div class="t"><h2>Flight delayed.<br>The terminal knows at once.</h2>
+<p class="lede">One announcement over the terminal speakers carries the update as sound. Every phone in earshot shows the new time and gate, even when the airport Wi-Fi is jammed. Keep scrolling to send it.</p></div>
+<div class="phone" id="ph1"><div class="stat a" style="--i:0"><i></i>Received through SoundDrop</div>
+<div class="n a" style="--i:1"><b>Flight SD 204 is delayed</b><span>Now departs 18:35 from gate B9</span></div>
+<ul><li class="a" style="--i:2">Was 17:50 from gate B7</li><li class="a" style="--i:3">Meal voucher at Desk 4</li><li class="a" style="--i:4">Save rebooking options</li></ul></div>
+</div></section>
+
+<section class="scene" id="disaster"><div class="stick">
+<div class="t"><h2>When the water rises or the ground shakes</h2>
+<p class="lede" id="dtxt">Cell towers fail or clog first. A siren tower can still broadcast, and every phone nearby receives the do's and don'ts. Scroll to watch the warning go out.</p>
+<div class="tog"><button type="button" id="mf" aria-pressed="true">Flood</button><button type="button" id="mq" aria-pressed="false">Earthquake</button></div></div>
+<div class="phone" id="ph2"><div class="stat a" style="--i:0"><i></i>Received through SoundDrop</div>
+<div class="n w a" style="--i:1"><b id="ptit"></b><span id="psub"></span></div>
+<div class="dd"><div><h4>Do</h4><ul id="dos"></ul></div><div><h4>Don't</h4><ul id="donts"></ul></div></div></div>
+</div></section>
+
+<section class="studio" id="studio"><h2>The studio</h2>
+<p class="lede">Both sides of SoundDrop, live on this page. Beam from the sender and the receiver listens through the microphone. Use one device, or open this page on two and keep them 15 to 50 cm apart.</p>
+<div class="pair">
+<div><h3 class="cap">Sender</h3><p class="capd">Pick a file or type a message, then press Beam Sound.</p><div class="dev"><iframe title="SoundDrop sender" allow="microphone; autoplay" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot;&gt;
+&lt;title&gt;SoundDrop Turbo · Sonic Studio&lt;/title&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin&gt;
+&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;style&gt;
+:root{
+  --bg:#f4f0ff;
+  --bg2:#fff5fb;
+  --fg:#18122b;
+  --card:rgba(255,255,255,0.86);
+  --card-solid:#ffffff;
+  --ln:rgba(124,58,237,0.20);
+  --ac:#7c3aed;
+  --ac2:#ec4899;
+  --ac3:#06b6d4;
+  --gold:#f59e0b;
+  --ok:#10b981;
+  --mut:#5b527a;
+  --shadow:0 16px 40px -12px rgba(124,58,237,0.22);
+  --glow:0 0 24px rgba(236,72,153,0.28);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=&quot;light&quot;]){
+    --bg:#0d091f;
+    --bg2:#170f33;
+    --fg:#f8f5ff;
+    --card:rgba(26,19,54,0.82);
+    --card-solid:#1d153d;
+    --ln:rgba(167,139,250,0.24);
+    --ac:#8b5cf6;
+    --ac2:#f43f5e;
+    --ac3:#22d3ee;
+    --gold:#fbbf24;
+    --ok:#34d399;
+    --mut:#b4a9d6;
+    --shadow:0 18px 46px -10px rgba(0,0,0,0.65);
+    --glow:0 0 28px rgba(34,211,238,0.25);
+  }
+}
+:root[data-theme=&quot;dark&quot;]{
+  --bg:#0d091f;
+  --bg2:#170f33;
+  --fg:#f8f5ff;
+  --card:rgba(26,19,54,0.82);
+  --card-solid:#1d153d;
+  --ln:rgba(167,139,250,0.24);
+  --ac:#8b5cf6;
+  --ac2:#f43f5e;
+  --ac3:#22d3ee;
+  --gold:#fbbf24;
+  --ok:#34d399;
+  --mut:#b4a9d6;
+  --shadow:0 18px 46px -10px rgba(0,0,0,0.65);
+  --glow:0 0 28px rgba(34,211,238,0.25);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:inherit}
+body{
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);
+  color:var(--fg);
+  font:15px/1.5 &quot;Plus Jakarta Sans&quot;,system-ui,-apple-system,&quot;Segoe UI&quot;,sans-serif;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* Floating Animated Aurora Blobs */
+.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(68px);opacity:0.46;animation:floatBlob 14s ease-in-out infinite alternate}
+.b1{width:340px;height:340px;background:radial-gradient(circle,#8b5cf6,#ec4899);top:-80px;left:-90px}
+.b2{width:300px;height:300px;background:radial-gradient(circle,#06b6d4,#3b82f6);bottom:5%;right:-70px;animation-delay:-4s}
+.b3{width:240px;height:240px;background:radial-gradient(circle,#f59e0b,#ec4899);top:42%;left:55%;animation-delay:-8s;opacity:0.30}
+@keyframes floatBlob{
+  0%{transform:translate(0,0) scale(1) rotate(0deg)}
+  50%{transform:translate(28px,-24px) scale(1.08) rotate(12deg)}
+  100%{transform:translate(-18px,30px) scale(0.95) rotate(-10deg)}
+}
+
+/* Confetti Celebration Canvas */
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+
+main{position:relative;z-index:2;max-width:560px;margin:0 auto;padding:18px 14px 48px}
+
+header{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+  background:var(--card);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--ln);
+  border-radius:22px;
+  padding:12px 14px;
+  box-shadow:var(--shadow);
+}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 55%,#06b6d4 100%);
+  border-radius:16px;
+  width:50px;
+  height:50px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  flex-shrink:0;
+  box-shadow:0 8px 20px rgba(236,72,153,0.35);
+  animation:logoPop 3.5s ease-in-out infinite;
+}
+@keyframes logoPop{0%,100%{transform:rotate(-2deg) scale(1)}50%{transform:rotate(3deg) scale(1.05)}}
+h1{
+  font-family:&quot;Fredoka&quot;,system-ui,sans-serif;
+  font-size:21px;
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  letter-spacing:-0.01em;
+}
+.badge{
+  font-family:&quot;Plus Jakarta Sans&quot;,sans-serif;
+  font-size:10px;
+  background:linear-gradient(90deg,#ec4899,#8b5cf6,#06b6d4);
+  color:#fff;
+  padding:3px 9px;
+  border-radius:99px;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  box-shadow:0 3px 10px rgba(236,72,153,0.3);
+}
+.s{color:var(--mut);margin:2px 0 0;font-size:12.5px;font-weight:500}
+
+.theme-btn{
+  border:1px solid var(--ln);
+  background:var(--card-solid);
+  color:var(--fg);
+  border-radius:99px;
+  padding:8px 12px;
+  font-size:12.5px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  flex-shrink:0;
+}
+.theme-btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:var(--glow)}
+.theme-btn:active{transform:scale(0.95)}
+
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  border:1px solid var(--ln);
+  border-radius:16px;
+  padding:5px;
+  margin-bottom:14px;
+  box-shadow:var(--shadow);
+}
+button{
+  font:inherit;
+  border:0;
+  border-radius:12px;
+  padding:11px 14px;
+  background:transparent;
+  color:var(--fg);
+  cursor:pointer;
+  touch-action:manipulation;
+  user-select:none;
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1),background .2s,box-shadow .2s,border-color .2s;
+}
+button:active{transform:scale(0.97)}
+.tabs button{font-family:&quot;Fredoka&quot;,sans-serif;font-size:15px;font-weight:600;color:var(--mut)}
+.tabs .on{
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%);
+  color:#fff;
+  box-shadow:0 6px 18px rgba(124,58,237,0.35);
+}
+
+.card{
+  background:var(--card);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--ln);
+  border-radius:24px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+.card&gt;*{margin-top:13px}.card&gt;*:first-child{margin-top:0}
+
+.drop{
+  display:block;
+  border:2.5px dashed rgba(139,92,246,0.45);
+  background:linear-gradient(135deg,rgba(139,92,246,0.07),rgba(236,72,153,0.07),rgba(6,182,212,0.07));
+  border-radius:18px;
+  padding:18px 14px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+}
+.drop:hover{
+  border-color:#ec4899;
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(236,72,153,0.16);
+}
+.drop-icon{font-size:26px;display:block;margin-bottom:3px}
+.drop b{display:block;word-break:break-all;font-size:15px;color:var(--fg)}
+.drop small,small{color:var(--mut);font-weight:500}
+
+input[type=password],textarea,select{
+  width:100%;
+  box-sizing:border-box;
+  font:inherit;
+  padding:11px 13px;
+  border-radius:14px;
+  border:1.5px solid var(--ln);
+  background:var(--card-solid);
+  color:var(--fg);
+  transition:border-color .2s,box-shadow .2s;
+}
+input[type=password]:focus,textarea:focus,select:focus{
+  outline:none;
+  border-color:#8b5cf6;
+  box-shadow:0 0 0 3px rgba(139,92,246,0.2);
+}
+select{width:auto;padding:6px 10px;font-size:13.5px;font-weight:600}
+textarea{min-height:58px;resize:vertical}
+
+.sec-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:7px;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:7px;position:relative;z-index:3}
+.chips button{
+  border:1.5px solid var(--ln);
+  background:var(--card-solid);
+  color:var(--fg);
+  padding:8px 12px;
+  font-size:12.5px;
+  font-weight:700;
+  border-radius:99px;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+.chips button:hover{transform:translateY(-2px);border-color:#ec4899}
+.chips .on{
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 5px 15px rgba(236,72,153,0.34);
+}
+.chips button[data-v^=&quot;fsk&quot;].on{
+  background:linear-gradient(135deg,#06b6d4,#3b82f6);
+  box-shadow:0 5px 15px rgba(6,182,212,0.35);
+}
+.chips button[data-v=&quot;.05&quot;].on,.chips button[data-v=&quot;n&quot;].on{
+  background:linear-gradient(135deg,#f59e0b,#ef4444);
+  box-shadow:0 5px 15px rgba(245,158,11,0.35);
+}
+
+.go{
+  width:100%;
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%);
+  background-size:180% 180%;
+  animation:gradShift 5s ease infinite;
+  color:#fff;
+  font-family:&quot;Fredoka&quot;,sans-serif;
+  font-size:16.5px;
+  font-weight:600;
+  padding:14px 18px;
+  border-radius:16px;
+  box-shadow:0 10px 24px rgba(236,72,153,0.34);
+  letter-spacing:0.01em;
+}
+.go:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 14px 30px rgba(124,58,237,0.42)}
+.go.bcast-active{
+  background:linear-gradient(135deg,#06b6d4 0%,#3b82f6 50%,#8b5cf6 100%);
+  background-size:180% 180%;
+  box-shadow:0 10px 24px rgba(6,182,212,0.36);
+}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.btn-stop{
+  background:linear-gradient(135deg,#ef4444,#f97316);
+  color:#fff;
+  font-weight:700;
+  border:0 !important;
+  box-shadow:0 6px 16px rgba(239,68,68,0.3);
+}
+.btn-test{
+  background:linear-gradient(135deg,rgba(6,182,212,0.14),rgba(139,92,246,0.14));
+  border:1.5px solid rgba(6,182,212,0.45) !important;
+  color:var(--fg);
+  font-weight:700;
+  font-size:13px;
+}
+
+.bar{height:10px;background:rgba(139,92,246,0.14);border-radius:99px;overflow:hidden;position:relative}
+.bar i{
+  display:block;
+  height:100%;
+  width:0;
+  border-radius:99px;
+  background:linear-gradient(90deg,#06b6d4,#8b5cf6,#ec4899,#f59e0b);
+  background-size:200% 100%;
+  animation:shimmer 2s linear infinite;
+  transition:width .22s ease-out;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:0% 0}}
+
+/* Playful Equalizer + Pulse Radar */
+.radar{display:none;position:relative;height:96px;place-items:center}
+.live .radar{display:grid}
+.radar i{
+  position:absolute;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:2.5px solid #ec4899;
+  opacity:0;
+  animation:p 2.1s infinite;
+}
+.radar i:nth-child(2){border-color:#06b6d4;animation-delay:.7s}
+.radar i:nth-child(3){border-color:#8b5cf6;animation-delay:1.4s}
+.radar-core{
+  z-index:1;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  color:#fff;
+  padding:10px 16px;
+  border-radius:99px;
+  box-shadow:0 8px 22px rgba(236,72,153,0.4);
+  font-size:20px;
+}
+.eq{display:flex;align-items:flex-end;gap:3px;height:18px}
+.eq b{display:block;width:3.5px;background:#fff;border-radius:3px;animation:eqDance .65s ease-in-out infinite alternate}
+.eq b:nth-child(2){animation-delay:.15s}
+.eq b:nth-child(3){animation-delay:.3s}
+.eq b:nth-child(4){animation-delay:.45s}
+@keyframes eqDance{0%{height:4px}100%{height:18px}}
+@keyframes p{0%{transform:scale(1);opacity:.85}100%{transform:scale(3.1);opacity:0}}
+
+.st{
+  margin:0;
+  font-size:13.5px;
+  font-weight:500;
+  background:rgba(139,92,246,0.08);
+  border:1px solid var(--ln);
+  padding:10px 12px;
+  border-radius:14px;
+}
+
+.eta-box{
+  background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(6,182,212,0.12),rgba(236,72,153,0.12));
+  border:1.5px solid var(--ln);
+  border-radius:16px;
+  padding:12px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  text-align:center;
+}
+.eta-box div span{display:block;font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.eta-box div b{display:block;font-family:&quot;Fredoka&quot;,sans-serif;font-size:17px;margin-top:2px;background:linear-gradient(90deg,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.tiles{display:flex;flex-wrap:wrap;gap:3px;max-height:92px;overflow:hidden;padding:2px}
+.tiles span{width:9px;height:9px;border-radius:3px;background:rgba(139,92,246,0.18);transition:transform .2s,background .2s}
+.tiles .on{
+  background:linear-gradient(135deg,#10b981,#06b6d4);
+  box-shadow:0 0 8px rgba(16,185,129,0.5);
+  animation:tilePop .28s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes tilePop{0%{transform:scale(0.3)}70%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+.out a{
+  display:block;
+  background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);
+  color:#fff;
+  text-align:center;
+  padding:14px;
+  border-radius:16px;
+  text-decoration:none;
+  font-family:&quot;Fredoka&quot;,sans-serif;
+  font-size:16px;
+  font-weight:600;
+  word-break:break-all;
+  box-shadow:0 10px 24px rgba(16,185,129,0.34);
+  animation:tilePop .35s cubic-bezier(.34,1.56,.64,1);
+}
+.out pre{
+  background:var(--card-solid);
+  border:1.5px solid var(--ln);
+  border-radius:14px;
+  padding:12px;
+  font-size:13px;
+  margin-top:10px;
+}
+
+.row{display:flex;gap:8px;flex-wrap:wrap}.row button+button{border:1px solid var(--ln)}[hidden]{display:none!important}
+label.two{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);font-weight:500;cursor:pointer}
+input[type=checkbox]{accent-color:#ec4899;width:16px;height:16px;flex-shrink:0}
+
+/* Broadcast Mode Card */
+.bcast-box{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1.5px solid var(--ln);
+  background:linear-gradient(135deg,rgba(6,182,212,0.08),rgba(139,92,246,0.08));
+  transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.bcast-box.on{
+  border-color:#06b6d4;
+  background:linear-gradient(135deg,rgba(6,182,212,0.18),rgba(139,92,246,0.16));
+  box-shadow:0 6px 18px rgba(6,182,212,0.18);
+}
+.bcast-info{display:flex;flex-direction:column;gap:2px}
+.bcast-title{font-weight:700;font-size:13.5px;color:var(--fg);display:flex;align-items:center;gap:6px}
+.bcast-sub{font-size:12px;color:var(--mut);line-height:1.35}
+.bcast-pill{
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  padding:2px 7px;
+  border-radius:99px;
+  background:rgba(6,182,212,0.2);
+  color:var(--ac3);
+}
+.switch{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.slider{
+  position:absolute;cursor:pointer;inset:0;
+  background:rgba(139,92,246,0.25);
+  border-radius:99px;
+  transition:.25s cubic-bezier(.34,1.56,.64,1);
+}
+.slider:before{
+  position:absolute;content:&quot;&quot;;height:20px;width:20px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;
+  box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  transition:.25s cubic-bezier(.34,1.56,.64,1);
+}
+.switch input:checked + .slider{
+  background:linear-gradient(135deg,#06b6d4,#7c3aed);
+}
+.switch input:checked + .slider:before{
+  transform:translateX(20px);
+}
+
+.est{
+  font-size:13px;
+  color:var(--fg);
+  font-weight:700;
+  background:linear-gradient(135deg,rgba(245,158,11,0.16),rgba(236,72,153,0.14));
+  padding:9px 13px;
+  border-radius:13px;
+  border:1.5px solid rgba(245,158,11,0.35);
+}
+.spec-wrap{background:var(--card-solid);border:1.5px solid var(--ln);border-radius:16px;padding:8px 10px}
+.spec-hdr{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--mut);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.spec-wrap canvas{width:100%;height:74px;display:block;border-radius:8px}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div class=&quot;aurora&quot; aria-hidden=&quot;true&quot;&gt;
+  &lt;div class=&quot;blob b1&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;blob b2&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;blob b3&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;canvas id=&quot;confetti&quot; aria-hidden=&quot;true&quot;&gt;&lt;/canvas&gt;
+
+&lt;main&gt;
+&lt;header&gt;
+  &lt;div class=&quot;brand&quot;&gt;
+    &lt;div class=&quot;logo&quot; aria-hidden=&quot;true&quot;&gt;
+      &lt;svg width=&quot;28&quot; height=&quot;28&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+        &lt;path d=&quot;M2 10v4&quot;/&gt;&lt;path d=&quot;M6 6v12&quot;/&gt;&lt;path d=&quot;M10 3v18&quot;/&gt;&lt;path d=&quot;M14 8v8&quot;/&gt;&lt;path d=&quot;M18 5v14&quot;/&gt;&lt;path d=&quot;M22 10v4&quot;/&gt;
+      &lt;/svg&gt;
+    &lt;/div&gt;
+    &lt;div&gt;
+      &lt;h1&gt;SoundDrop &lt;span class=&quot;badge&quot;&gt;Sonic Studio&lt;/span&gt;&lt;/h1&gt;
+      &lt;p class=&quot;s&quot;&gt;Colorful ultra-fast acoustic air-drop · OFDM + FSK + MFSK&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;button type=&quot;button&quot; class=&quot;theme-btn&quot; id=&quot;themeBtn&quot; title=&quot;Switch theme&quot;&gt;✨ Auto&lt;/button&gt;
+&lt;/header&gt;
+
+&lt;nav class=&quot;tabs&quot;&gt;
+  &lt;button type=&quot;button&quot; id=&quot;tS&quot; class=&quot;on&quot;&gt;🚀 Send&lt;/button&gt;
+  &lt;button type=&quot;button&quot; id=&quot;tR&quot;&gt;📡 Receive&lt;/button&gt;
+&lt;/nav&gt;
+
+&lt;!-- SENDER PANEL --&gt;
+&lt;section id=&quot;pS&quot; class=&quot;card&quot;&gt;
+  &lt;label class=&quot;drop&quot; id=&quot;drop&quot;&gt;
+    &lt;input type=&quot;file&quot; id=&quot;file&quot; hidden&gt;
+    &lt;span class=&quot;drop-icon&quot;&gt;🎁&lt;/span&gt;
+    &lt;b id=&quot;fn&quot;&gt;Tap to choose a file&lt;/b&gt;
+    &lt;small&gt;or drop one here · sends over pure sound waves!&lt;/small&gt;
+  &lt;/label&gt;
+  &lt;textarea id=&quot;txt&quot; placeholder=&quot;💬 …or type a secret message to beam across the room&quot;&gt;&lt;/textarea&gt;
+  &lt;input id=&quot;spass&quot; type=&quot;password&quot; placeholder=&quot;🔐 Passphrase (optional, AES-256 encrypts your payload)&quot;&gt;
+  
+  &lt;div&gt;
+    &lt;span class=&quot;sec-lbl&quot;&gt;🎛️ Modulation Mode &amp;amp; Speed&lt;/span&gt;
+    &lt;div class=&quot;chips&quot; id=&quot;chips&quot;&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;auto&quot; class=&quot;on&quot;&gt;✨ Auto (Smart)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;t&quot;&gt;🚀 OFDM Turbo (8ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;f&quot;&gt;⚡ OFDM Fast (14ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;b&quot;&gt;🎯 OFDM Balanced (26ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;fsk_f&quot;&gt;🌊 FSK Hyper (15ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;fsk_c&quot;&gt;📻 FSK Classic (32ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;.05&quot;&gt;🛡️ Robust (1-Tone · 50ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;n&quot;&gt;🔇 Narrow (Noisy room)&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div id=&quot;sEst&quot; class=&quot;est&quot; hidden&gt;&lt;/div&gt;
+
+  &lt;label class=&quot;two&quot;&gt;🎚️ Resonant centre (Narrow mode)
+    &lt;select id=&quot;ctr&quot;&gt;
+      &lt;option value=&quot;s&quot; selected&gt;Sweep all four&lt;/option&gt;
+      &lt;option value=&quot;0&quot;&gt;2000 Hz&lt;/option&gt;
+      &lt;option value=&quot;1&quot;&gt;2600 Hz&lt;/option&gt;
+      &lt;option value=&quot;2&quot;&gt;3200 Hz&lt;/option&gt;
+      &lt;option value=&quot;3&quot;&gt;3800 Hz&lt;/option&gt;
+    &lt;/select&gt;
+  &lt;/label&gt;
+
+  &lt;!-- BROADCASTING MODE TOGGLE --&gt;
+  &lt;div class=&quot;bcast-box&quot; id=&quot;bcastBox&quot;&gt;
+    &lt;div class=&quot;bcast-info&quot;&gt;
+      &lt;span class=&quot;bcast-title&quot;&gt;📻 Broadcasting Mode &lt;span class=&quot;bcast-pill&quot;&gt;Group Send&lt;/span&gt;&lt;/span&gt;
+      &lt;span class=&quot;bcast-sub&quot;&gt;Keeps looping audio continuously even after receivers finish until you turn it off&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;label class=&quot;switch&quot; title=&quot;Toggle Broadcasting Mode&quot;&gt;
+      &lt;input type=&quot;checkbox&quot; id=&quot;bcast&quot;&gt;
+      &lt;span class=&quot;slider&quot;&gt;&lt;/span&gt;
+    &lt;/label&gt;
+  &lt;/div&gt;
+
+  &lt;label class=&quot;two&quot; id=&quot;twoRow&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;two&quot; checked&gt; 🤝 Two-way smart sync: auto-silences the instant receiver confirms&lt;/label&gt;
+
+  &lt;div class=&quot;radar&quot;&gt;
+    &lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;
+    &lt;div class=&quot;radar-core&quot;&gt;&lt;span&gt;🔊&lt;/span&gt;&lt;span class=&quot;eq&quot;&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;bar&quot;&gt;&lt;i id=&quot;sb&quot;&gt;&lt;/i&gt;&lt;/div&gt;
+  &lt;p id=&quot;sInfo&quot; class=&quot;st&quot;&gt;Pick a file or type a message, then tap Beam Sound. Audio auto-mutes the moment transfer finishes!&lt;/p&gt;
+  &lt;div class=&quot;row&quot;&gt;
+    &lt;button type=&quot;button&quot; class=&quot;go&quot; id=&quot;bS&quot;&gt;🔊 Beam Sound&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn-stop&quot; id=&quot;bX&quot; hidden&gt;⏹ Stop&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+
+&lt;!-- RECEIVER PANEL --&gt;
+&lt;section id=&quot;pR&quot; class=&quot;card&quot; hidden&gt;
+  &lt;div class=&quot;radar&quot;&gt;
+    &lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;
+    &lt;div class=&quot;radar-core&quot;&gt;&lt;span&gt;🎤&lt;/span&gt;&lt;span class=&quot;eq&quot;&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div&gt;
+    &lt;div style=&quot;display:flex;justify-content:space-between;margin-bottom:4px&quot;&gt;
+      &lt;small&gt;🎙️ Mic input level&lt;/small&gt;
+      &lt;small&gt;Auto-detects OFDM · FSK · MFSK&lt;/small&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;bar&quot;&gt;&lt;i id=&quot;lv&quot;&gt;&lt;/i&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;spec-wrap&quot;&gt;
+    &lt;div class=&quot;spec-hdr&quot;&gt;&lt;span&gt;🌈 Live Sonic Spectrum (0–8 kHz)&lt;/span&gt;&lt;span id=&quot;specTag&quot;&gt;Idle&lt;/span&gt;&lt;/div&gt;
+    &lt;canvas id=&quot;spec&quot;&gt;&lt;/canvas&gt;
+  &lt;/div&gt;
+  
+  &lt;div id=&quot;rEtaBox&quot; class=&quot;eta-box&quot; hidden&gt;
+    &lt;div&gt;&lt;span&gt;⏳ Time Left&lt;/span&gt;&lt;b id=&quot;rEta&quot;&gt;--&lt;/b&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;span&gt;⚡ Speed&lt;/span&gt;&lt;b id=&quot;rSpd&quot;&gt;--&lt;/b&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;span&gt;📦 Est. Size&lt;/span&gt;&lt;b id=&quot;rSz&quot;&gt;--&lt;/b&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;bar&quot;&gt;&lt;i id=&quot;pb&quot;&gt;&lt;/i&gt;&lt;/div&gt;
+  &lt;div class=&quot;tiles&quot; id=&quot;tiles&quot;&gt;&lt;/div&gt;
+  &lt;p id=&quot;rInfo&quot; class=&quot;st&quot;&gt;Tap Start Listening, allow the microphone, and place devices 15–50 cm apart.&lt;/p&gt;
+  &lt;input id=&quot;rpass&quot; type=&quot;password&quot; placeholder=&quot;🔑 Passphrase (if the sender set one)&quot;&gt;
+  &lt;button type=&quot;button&quot; id=&quot;bU&quot; class=&quot;go&quot; hidden&gt;🔓 Unlock File&lt;/button&gt;
+  &lt;div class=&quot;out&quot; id=&quot;out&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;row&quot;&gt;
+    &lt;button type=&quot;button&quot; class=&quot;go&quot; id=&quot;bL&quot;&gt;🎧 Start Listening&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn-stop&quot; id=&quot;bY&quot; hidden&gt;⏹ Stop&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn-test&quot; id=&quot;bTest&quot;&gt;🧪 Test Loopback&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+&lt;/main&gt;
+
+&lt;script&gt;
+// ================= DOM HELPER &amp; UTILITIES =================
+const $ = id =&gt; document.getElementById(id);
+const fmt = n =&gt; n &lt; 1024 ? n + &#x27; B&#x27; : n &lt; 1048576 ? (n / 1024).toFixed(1) + &#x27; KB&#x27; : (n / 1048576).toFixed(2) + &#x27; MB&#x27;;
+const fmtTime = s =&gt; {
+  if(!isFinite(s) || s &lt; 0) return &#x27;--&#x27;;
+  if(s &lt; 1) return s.toFixed(1) + &#x27;s&#x27;;
+  s = Math.ceil(s);
+  if(s &lt; 60) return s + &#x27;s&#x27;;
+  const m = Math.floor(s / 60), r = s % 60;
+  return `${m}m ${r}s`;
+};
+const MIC = { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } };
+
+// ================= THEME TOGGLE &amp; CELEBRATION CONFETTI =================
+(() =&gt; {
+  const root = document.documentElement;
+  const btn = $(&#x27;themeBtn&#x27;);
+  let mode = localStorage.getItem(&#x27;sd-theme&#x27;) || &#x27;auto&#x27;;
+  const applyTheme = m =&gt; {
+    mode = m;
+    if(m === &#x27;auto&#x27;){ root.removeAttribute(&#x27;data-theme&#x27;); btn.textContent = &#x27;✨ Auto&#x27;; }
+    else if(m === &#x27;dark&#x27;){ root.setAttribute(&#x27;data-theme&#x27;, &#x27;dark&#x27;); btn.textContent = &#x27;🌌 Neon&#x27;; }
+    else { root.setAttribute(&#x27;data-theme&#x27;, &#x27;light&#x27;); btn.textContent = &#x27;🍭 Candy&#x27;; }
+    try{ localStorage.setItem(&#x27;sd-theme&#x27;, m); }catch(e){}
+  };
+  applyTheme(mode);
+  btn.addEventListener(&#x27;click&#x27;, () =&gt; applyTheme(mode === &#x27;auto&#x27; ? &#x27;dark&#x27; : mode === &#x27;dark&#x27; ? &#x27;light&#x27; : &#x27;auto&#x27;));
+})();
+
+const confettiCanvas = $(&#x27;confetti&#x27;);
+const cctx = confettiCanvas.getContext(&#x27;2d&#x27;);
+let particles = [], confettiAnim = null;
+function burstConfetti(){
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  const colors = [&#x27;#7c3aed&#x27;, &#x27;#ec4899&#x27;, &#x27;#06b6d4&#x27;, &#x27;#10b981&#x27;, &#x27;#f59e0b&#x27;, &#x27;#f43f5e&#x27;];
+  for(let i = 0; i &lt; 80; i++){
+    particles.push({
+      x: confettiCanvas.width * (0.2 + Math.random() * 0.6),
+      y: confettiCanvas.height * 0.42,
+      vx: (Math.random() - 0.5) * 11,
+      vy: -4 - Math.random() * 9,
+      size: 5 + Math.random() * 6,
+      rot: Math.random() * Math.PI * 2,
+      vrot: (Math.random() - 0.5) * 0.25,
+      color: colors[i % colors.length],
+      life: 1
+    });
+  }
+  if(!confettiAnim){
+    const tick = () =&gt; {
+      cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      particles = particles.filter(p =&gt; p.life &gt; 0.02);
+      for(const p of particles){
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.28;
+        p.rot += p.vrot;
+        p.life -= 0.015;
+        cctx.save();
+        cctx.globalAlpha = Math.max(0, p.life);
+        cctx.translate(p.x, p.y);
+        cctx.rotate(p.rot);
+        cctx.fillStyle = p.color;
+        cctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+        cctx.restore();
+      }
+      if(particles.length) confettiAnim = requestAnimationFrame(tick);
+      else { cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height); confettiAnim = null; }
+    };
+    confettiAnim = requestAnimationFrame(tick);
+  }
+}
+
+// ================= MODULATION &amp; PROTOCOL CONSTANTS =================
+const PL1 = 12, AO = 7800, CENT = [2000, 2600, 3200, 3800];
+const WIDE1 = Array.from({length: 18}, (_, i) =&gt; i &lt; 16 ? 1500 + i * 360 : [1050, 1320][i - 16]);
+const nt = (c, sym) =&gt; {
+  const sp = 4.33 / sym;
+  return Array.from({length: 18}, (_, i) =&gt; i &lt; 16 ? c + (i - 7.5) * sp : c + (i === 16 ? -9.5 : 9.5) * sp);
+};
+
+const PL4 = 64;
+const BANDS4 = [0, 1, 2, 3].map(b =&gt; Array.from({length: 16}, (_, k) =&gt; 1400 + (b * 16 + k) * 110));
+const SYNC4_A = [1180, 3160, 4920, 6680];
+const SYNC4_B = [1290, 3270, 5030, 6790];
+
+const FSK_PRE = [2, 0, 2, 0, 2, 0, 2, 0];
+const FSK_CLASSIC_CFG = { sym: 0.032, f0: 1000, f1: 2000, fsy: 1500, label: &#x27;FSK Classic (32ms)&#x27; };
+const FSK_FAST_CFG    = { sym: 0.015, f0: 1200, f1: 2400, fsy: 1800, label: &#x27;FSK Hyper (15ms)&#x27; };
+const PL_FSK = 24;
+
+// ================= CRC, COMPRESSION, ENCRYPTION &amp; PACKETIZATION =================
+function crc16(bytes){
+  let c = 0xffff;
+  for(let k = 0; k &lt; bytes.length; k++){
+    c ^= bytes[k] &lt;&lt; 8;
+    for(let i = 0; i &lt; 8; i++) c = (c &amp; 0x8000) ? ((c &lt;&lt; 1) ^ 0x1021) &amp; 0xffff : (c &lt;&lt; 1) &amp; 0xffff;
+  }
+  return c;
+}
+const crc = crc16;
+
+const streamPipe = (b, T) =&gt; new Response(new Blob([b]).stream().pipeThrough(new T(&#x27;deflate&#x27;))).arrayBuffer();
+
+async function deriveAesKey(pass, salt){
+  const m = await crypto.subtle.importKey(&#x27;raw&#x27;, new TextEncoder().encode(pass), &#x27;PBKDF2&#x27;, false, [&#x27;deriveKey&#x27;]);
+  return crypto.subtle.deriveKey(
+    { name: &#x27;PBKDF2&#x27;, salt, iterations: 100000, hash: &#x27;SHA-256&#x27; },
+    m,
+    { name: &#x27;AES-GCM&#x27;, length: 256 },
+    false,
+    [&#x27;encrypt&#x27;, &#x27;decrypt&#x27;]
+  );
+}
+
+async function packPayload(name, data, pass){
+  const n = new TextEncoder().encode(name).slice(0, 200);
+  const raw = new Uint8Array(1 + n.length + data.length);
+  raw[0] = n.length;
+  raw.set(n, 1);
+  raw.set(data, 1 + n.length);
+  let out = raw, flags = 0;
+  try{
+    if(typeof CompressionStream !== &#x27;undefined&#x27;){
+      const c = new Uint8Array(await streamPipe(raw, CompressionStream));
+      if(c.length &lt; raw.length){ out = c; flags = 1; }
+    }
+  }catch(e){}
+  if(pass){
+    const sa = crypto.getRandomValues(new Uint8Array(8));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: &#x27;AES-GCM&#x27;, iv }, await deriveAesKey(pass, sa), out));
+    const enc = new Uint8Array(20 + ct.length);
+    enc.set(sa, 0);
+    enc.set(iv, 8);
+    enc.set(ct, 20);
+    out = enc;
+    flags |= 2;
+  }
+  const res = new Uint8Array(out.length + 5);
+  res[0] = flags;
+  new DataView(res.buffer).setUint32(1, out.length);
+  res.set(out, 5);
+  return res;
+}
+
+function mkPkt(fid, tot, idx, pl, plSize){
+  const b = new Uint8Array(plSize + 7);
+  b[0] = fid;
+  b[1] = idx &gt;&gt; 8; b[2] = idx &amp; 255;
+  b[3] = tot &gt;&gt; 8; b[4] = tot &amp; 255;
+  b.set(pl.subarray(0, plSize), 5);
+  const c = crc16(b.subarray(0, plSize + 5));
+  b[plSize + 5] = c &gt;&gt; 8;
+  b[plSize + 6] = c &amp; 255;
+  return b;
+}
+
+function makePackets(packed, plSize){
+  const fid = (Math.random() * 254 | 0) + 1;
+  const tot = Math.max(1, Math.ceil(packed.length / plSize));
+  return Array.from({length: tot}, (_, i) =&gt; mkPkt(fid, tot, i, packed.subarray(i * plSize, (i + 1) * plSize), plSize));
+}
+
+// ================= 3-TONE CONTINUOUS-PHASE FSK FRAMING &amp; SYNTHESIS =================
+function bitsFromBytes(bytes){
+  const bits = [];
+  for(let k = 0; k &lt; bytes.length; k++){
+    const v = bytes[k];
+    for(let i = 7; i &gt;= 0; i--) bits.push((v &gt;&gt; i) &amp; 1);
+  }
+  return bits;
+}
+
+function fskShortTextSymbols(text){
+  const bytes = [...text].map(c =&gt; c.charCodeAt(0) &amp; 255);
+  const body = [bytes.length, ...bytes];
+  const sum = crc16(body);
+  return [...FSK_PRE, ...bitsFromBytes([...body, (sum &gt;&gt; 8) &amp; 255, sum &amp; 255])];
+}
+
+function fskChunkSymbols(fid, seq, tot, chunk){
+  const clen = chunk.length;
+  const headerAndData = [0xA5, fid &amp; 255, (seq &gt;&gt; 8) &amp; 255, seq &amp; 255, (tot &gt;&gt; 8) &amp; 255, tot &amp; 255, clen, ...chunk];
+  const sum = crc16(headerAndData);
+  return [...FSK_PRE, ...bitsFromBytes([...headerAndData, (sum &gt;&gt; 8) &amp; 255, sum &amp; 255])];
+}
+
+function synthFSK(syms, sym, f0, f1, fsy, sr, amp = 0.88){
+  const N = Math.max(4, Math.round(sym * sr));
+  const sil = Math.round(0.055 * sr);
+  const bodyLen = N * syms.length;
+  const out = new Float32Array(sil * 2 + bodyLen);
+  let ph = 0;
+  for(let k = 0; k &lt; syms.length; k++){
+    const s = syms[k];
+    const freq = s === 2 ? fsy : (s ? f1 : f0);
+    const w = 2 * Math.PI * freq / sr;
+    const base = sil + k * N;
+    for(let i = 0; i &lt; N; i++){
+      out[base + i] = amp * Math.sin(ph);
+      ph += w;
+    }
+  }
+  const F = Math.min(Math.round(0.003 * sr), Math.floor(bodyLen / 4));
+  const a = sil, b = sil + bodyLen;
+  for(let i = 0; i &lt; F; i++){
+    const g = 0.5 - 0.5 * Math.cos(Math.PI * i / F);
+    out[a + i] *= g;
+    out[b - 1 - i] *= g;
+  }
+  return out;
+}
+
+// ================= UNIFIED AUDIO SYNTHESIS (OFDM, MFSK, AND 3-TONE CPFSK) =================
+function renderAudio(items, sr, amp = 0.88, leadSil = 0.03){
+  const fd = Math.round(sr * 0.0015);
+  let totalSamples = Math.round(sr * leadSil);
+  const plans = items.map(it =&gt; {
+    const s = Math.round(sr * it.sym);
+    if(it.fsk){
+      const wave = synthFSK(it.syms, it.sym, it.f0, it.f1, it.fsy, sr, amp);
+      totalSamples += wave.length;
+      return { wave, mode: &#x27;fsk&#x27; };
+    } else if(it.chords){
+      const syms = [SYNC4_A, SYNC4_B, SYNC4_A];
+      const padded = new Uint8Array(72);
+      padded.set(it.b);
+      for(let i = 0; i &lt; 72; i += 2){
+        const b0 = padded[i], b1 = padded[i + 1];
+        syms.push([BANDS4[0][b0 &gt;&gt; 4], BANDS4[1][b0 &amp; 15], BANDS4[2][b1 &gt;&gt; 4], BANDS4[3][b1 &amp; 15]]);
+      }
+      totalSamples += syms.length * s;
+      return { s, syms, mode: &#x27;ofdm&#x27; };
+    } else {
+      const sy = [16, 17, 16, 17, 16, 17];
+      for(let i = 0; i &lt; it.b.length; i++) sy.push(it.b[i] &gt;&gt; 4, it.b[i] &amp; 15);
+      totalSamples += sy.length * s;
+      return { s, sy, t: it.t, mode: &#x27;mfsk&#x27; };
+    }
+  });
+
+  const buf = new Float32Array(totalSamples);
+  let o = Math.round(sr * leadSil);
+  for(const p of plans){
+    if(p.mode === &#x27;fsk&#x27;){
+      buf.set(p.wave, o);
+      o += p.wave.length;
+    } else if(p.mode === &#x27;ofdm&#x27;){
+      const s = p.s, subAmp = amp * 0.245;
+      for(const chord of p.syms){
+        const w0 = chord[0] * 2 * Math.PI / sr;
+        const w1 = chord[1] * 2 * Math.PI / sr;
+        const w2 = chord[2] * 2 * Math.PI / sr;
+        const w3 = chord[3] * 2 * Math.PI / sr;
+        for(let i = 0; i &lt; s; i++){
+          let a = subAmp;
+          if(i &lt; fd) a *= i / fd;
+          else if(i &gt;= s - fd) a *= (s - i) / fd;
+          buf[o + i] = a * (Math.sin(w0 * i) + Math.sin(w1 * i) + Math.sin(w2 * i) + Math.sin(w3 * i));
+        }
+        o += s;
+      }
+    } else {
+      const s = p.s;
+      for(const k of p.sy){
+        const w = p.t[k] * 2 * Math.PI / sr;
+        for(let i = 0; i &lt; s; i++){
+          let a = amp;
+          if(i &lt; fd) a *= i / fd;
+          else if(i &gt;= s - fd) a *= (s - i) / fd;
+          buf[o + i] = a * Math.sin(w * i);
+        }
+        o += s;
+      }
+    }
+  }
+  return buf;
+}
+
+// ================= DECODER 1: ROBUST/NARROW 1-TONE MFSK DECODER =================
+class Dec1 {
+  constructor(sr, sym, on, t){
+    this.h = Math.round(sr * sym / 4);
+    this.W = this.h * 4;
+    this.on = on;
+    this.ring = new Float32Array(this.W);
+    this.pos = 0; this.n = 0; this.hist = []; this.cool = 0;
+    this.sym = sym;
+    this.modeName = `1-Tone MFSK (${Math.round(sym * 1000)}ms)`;
+    this.Wd = Math.round(this.W * 0.65);
+    this.hw = Float32Array.from({length: this.Wd}, (_, i) =&gt; 0.5 - 0.5 * Math.cos(2 * Math.PI * (i + 0.5) / this.Wd));
+    this.t = t;
+    this.co = t.map(f =&gt; 2 * Math.cos(2 * Math.PI * f / sr));
+  }
+  push(x){
+    for(let i = 0; i &lt; x.length; i++){
+      this.ring[this.pos] = x[i];
+      if(++this.pos === this.W) this.pos = 0;
+      if(++this.n % this.h === 0 &amp;&amp; this.n &gt;= this.W) this.hop();
+    }
+  }
+  hop(){
+    const W = this.W, r = this.ring, E = new Float32Array(18), Wd = this.Wd, hw = this.hw;
+    for(let k = 0; k &lt; 18; k++){
+      const c = this.co[k];
+      let a = 0, b = 0, j = (this.pos + W - Wd) % W;
+      for(let i = 0; i &lt; Wd; i++){
+        const s = r[j] * hw[i] + c * a - b;
+        b = a; a = s;
+        if(++j === W) j = 0;
+      }
+      E[k] = a * a + b * b - c * a * b;
+    }
+    const H = this.hist; H.push(E); if(H.length &gt; 380) H.shift();
+    if(this.cool &gt; 0){ this.cool--; return; }
+    const L = H.length; if(L &lt; 176) return;
+    const s = L - 176;
+    const am = k =&gt; {
+      const e = H[s + 4 * k + 3];
+      let m = 0;
+      for(let j = 1; j &lt; 18; j++) if(e[j] &gt; e[m]) m = j;
+      return m;
+    };
+    for(let k = 0; k &lt; 6; k++) if(am(k) !== 16 + k % 2) return;
+    const v = [], al = [];
+    for(let i = 0; i &lt; 38; i++){
+      const e = H[s + 4 * (6 + i) + 3];
+      let m = 0, m2 = -1;
+      for(let j = 1; j &lt; 18; j++) if(e[j] &gt; e[m]) m = j;
+      if(m &gt; 15) return;
+      for(let j = 0; j &lt; 16; j++) if(j !== m &amp;&amp; (m2 &lt; 0 || e[j] &gt; e[m2])) m2 = j;
+      v.push(m);
+      al.push([m2, e[m2] / (e[m] + 1e-9)]);
+    }
+    const by = a =&gt; {
+      const b = new Uint8Array(19);
+      for(let i = 0; i &lt; 38; i++) b[i &gt;&gt; 1] |= (i &amp; 1) ? a[i] : (a[i] &lt;&lt; 4);
+      return b;
+    };
+    const ok = b =&gt; crc16(b.subarray(0, 17)) === ((b[17] &lt;&lt; 8) | b[18]);
+    let B = by(v);
+    if(!ok(B)){
+      const o = [...v.keys()].sort((x, y) =&gt; al[y][1] - al[x][1]).slice(0, 7);
+      let f = null;
+      for(let x = 0; x &lt; 7 &amp;&amp; !f; x++){
+        const t = v.slice(); t[o[x]] = al[o[x]][0];
+        if(ok(by(t))) f = by(t);
+        for(let y = x + 1; y &lt; 7 &amp;&amp; !f; y++){
+          const u = t.slice(); u[o[y]] = al[o[y]][0];
+          if(ok(by(u))) f = by(u);
+        }
+      }
+      if(!f) return;
+      B = f;
+    }
+    this.cool = 170;
+    this.on(B, this.sym, this, PL1);
+  }
+}
+
+// ================= DECODER 2: HIGH-SPEED 4-TONE PARALLEL CHORD DECODER (OFDM) =================
+class Dec4 {
+  constructor(sr, sym, on){
+    this.sym = sym;
+    this.modeName = `4-Tone OFDM (${Math.round(sym * 1000)}ms)`;
+    this.h = Math.round(sr * sym / 3);
+    this.W = this.h * 3;
+    this.on = on;
+    this.ring = new Float32Array(this.W);
+    this.pos = 0; this.n = 0; this.hist = []; this.cool = 0;
+    this.Wd = Math.round(this.W * 0.85);
+    this.hw = Float32Array.from({length: this.Wd}, (_, i) =&gt; 0.5 - 0.5 * Math.cos(2 * Math.PI * (i + 0.5) / this.Wd));
+    this.freqs = [...BANDS4.flat(), ...SYNC4_A, ...SYNC4_B];
+    this.co = this.freqs.map(f =&gt; 2 * Math.cos(2 * Math.PI * f / sr));
+  }
+  push(x){
+    for(let i = 0; i &lt; x.length; i++){
+      this.ring[this.pos] = x[i];
+      if(++this.pos === this.W) this.pos = 0;
+      if(++this.n % this.h === 0 &amp;&amp; this.n &gt;= this.W) this.hop();
+    }
+  }
+  hop(){
+    const W = this.W, r = this.ring, E = new Float32Array(72), Wd = this.Wd, hw = this.hw;
+    for(let k = 0; k &lt; 72; k++){
+      const c = this.co[k];
+      let a = 0, b = 0, j = (this.pos + W - Wd) % W;
+      for(let i = 0; i &lt; Wd; i++){
+        const s = r[j] * hw[i] + c * a - b;
+        b = a; a = s;
+        if(++j === W) j = 0;
+      }
+      E[k] = a * a + b * b - c * a * b;
+    }
+    const H = this.hist; H.push(E); if(H.length &gt; 160) H.shift();
+    if(this.cool &gt; 0){ this.cool--; return; }
+    const L = H.length; if(L &lt; 117) return;
+    const s = L - 117;
+
+    for(let k = 0; k &lt; 3; k++){
+      const e = H[s + 3 * k + 2];
+      let syncE = 0, otherSyncE = 0;
+      const baseA = 64, baseB = 68;
+      for(let j = 0; j &lt; 4; j++){
+        if(k % 2 === 0){ syncE += e[baseA + j]; otherSyncE += e[baseB + j]; }
+        else { syncE += e[baseB + j]; otherSyncE += e[baseA + j]; }
+      }
+      if(syncE &lt;= otherSyncE * 1.35) return;
+      let maxData = 0;
+      for(let j = 0; j &lt; 16; j++) if(e[j] &gt; maxData) maxData = e[j];
+      if(syncE &lt; maxData * 1.4) return;
+    }
+
+    const nibs = new Uint8Array(144), alts = [];
+    for(let symIdx = 0; symIdx &lt; 36; symIdx++){
+      const e = H[s + 3 * (3 + symIdx) + 2];
+      for(let b = 0; b &lt; 4; b++){
+        const off = b * 16;
+        let m = 0, m2 = -1;
+        for(let j = 1; j &lt; 16; j++) if(e[off + j] &gt; e[off + m]) m = j;
+        for(let j = 0; j &lt; 16; j++) if(j !== m &amp;&amp; (m2 &lt; 0 || e[off + j] &gt; e[off + m2])) m2 = j;
+        const idx = symIdx * 4 + b;
+        nibs[idx] = m;
+        if(idx &lt; 142) alts.push([idx, m2, e[off + m2] / (e[off + m] + 1e-9)]);
+      }
+    }
+
+    const toBytes = nb =&gt; {
+      const out = new Uint8Array(71);
+      for(let i = 0; i &lt; 142; i++) out[i &gt;&gt; 1] |= (i &amp; 1) ? nb[i] : (nb[i] &lt;&lt; 4);
+      return out;
+    };
+    const ok = b =&gt; crc16(b.subarray(0, 69)) === ((b[69] &lt;&lt; 8) | b[70]);
+
+    let B = toBytes(nibs);
+    if(!ok(B)){
+      alts.sort((a, b) =&gt; b[2] - a[2]);
+      const top = alts.slice(0, 8);
+      let fixed = null;
+      for(let x = 0; x &lt; top.length &amp;&amp; !fixed; x++){
+        const t = nibs.slice(); t[top[x][0]] = top[x][1];
+        if(ok(toBytes(t))) fixed = toBytes(t);
+        for(let y = x + 1; y &lt; top.length &amp;&amp; !fixed; y++){
+          const u = t.slice(); u[top[y][0]] = top[y][1];
+          if(ok(toBytes(u))) fixed = toBytes(u);
+        }
+      }
+      if(!fixed) return;
+      B = fixed;
+    }
+
+    this.cool = 110;
+    this.on(B, this.sym, this, PL4);
+  }
+}
+
+// ================= DECODER 3: 3-TONE CONTINUOUS-PHASE FSK SLIDING-WINDOW DECODER =================
+function gzWindow(x, s, n, f, sr){
+  const c = 2 * Math.cos(2 * Math.PI * f / sr);
+  let a = 0, b = 0;
+  const end = Math.min(x.length, s + n);
+  for(let i = s; i &lt; end; i++){
+    const t = x[i] + c * a - b;
+    b = a; a = t;
+  }
+  return a * a + b * b - c * a * b;
+}
+
+function fskTones(x, s, N, cfg, sr){
+  const m = Math.round(N * 0.15);
+  const n = Math.max(4, Math.round(N * 0.70));
+  return [
+    gzWindow(x, s + m, n, cfg.f0, sr),
+    gzWindow(x, s + m, n, cfg.f1, sr),
+    gzWindow(x, s + m, n, cfg.fsy, sr)
+  ];
+}
+
+function fskPreScore(x, s, N, cfg, sr){
+  let sc = 0;
+  for(let k = 0; k &lt; 8; k++){
+    const p = fskTones(x, s + k * N, N, cfg, sr);
+    sc += p[FSK_PRE[k]] / (p[0] + p[1] + p[2] + 1e-12);
+    if(k &gt;= 2 &amp;&amp; sc &lt; 0.45 * (k + 1)) return 0;
+  }
+  return sc;
+}
+
+function bitsToBytes(bits){
+  const len = bits.length &gt;&gt; 3;
+  const out = new Uint8Array(len);
+  for(let i = 0; i &lt; len; i++){
+    let v = 0;
+    for(let b = 0; b &lt; 8; b++) v = (v &lt;&lt; 1) | bits[i * 8 + b];
+    out[i] = v;
+  }
+  return out;
+}
+
+function readFskBits(x, startPos, count, N, cfg, sr){
+  const bits = new Uint8Array(count);
+  for(let k = 0; k &lt; count; k++){
+    const p = fskTones(x, startPos + k * N, N, cfg, sr);
+    bits[k] = p[1] &gt; p[0] ? 1 : 0;
+  }
+  return bits;
+}
+
+function decodeFSKAt(x, pos, N, cfg, sr){
+  if(pos + 16 * N &gt; x.length) return null;
+  const lenBytes = bitsToBytes(readFskBits(x, pos + 8 * N, 8, N, cfg, sr));
+  const n = lenBytes[0];
+
+  if(n === 0xA5){
+    if(pos + 72 * N &gt; x.length) return null;
+    const hdrBytes = bitsToBytes(readFskBits(x, pos + 16 * N, 48, N, cfg, sr));
+    const fid = hdrBytes[0];
+    const seq = (hdrBytes[1] &lt;&lt; 8) | hdrBytes[2];
+    const tot = (hdrBytes[3] &lt;&lt; 8) | hdrBytes[4];
+    const clen = hdrBytes[5];
+    if(!tot || tot &gt; 4000 || seq &gt;= tot || clen &lt; 1 || clen &gt; PL_FSK) return null;
+
+    const totalFrameSyms = 16 + 48 + (clen + 2) * 8;
+    if(pos + totalFrameSyms * N &gt; x.length) return null;
+    const tailBytes = bitsToBytes(readFskBits(x, pos + 64 * N, (clen + 2) * 8, N, cfg, sr));
+    const chunk = tailBytes.subarray(0, clen);
+    const recvCrc = (tailBytes[clen] &lt;&lt; 8) | tailBytes[clen + 1];
+    const calcCrc = crc16([0xA5, ...hdrBytes, ...chunk]);
+    if(recvCrc !== calcCrc) return null;
+
+    return { kind: &#x27;pkt&#x27;, fid, seq, tot, data: new Uint8Array(chunk) };
+  }
+
+  if(n &gt;= 1 &amp;&amp; n &lt;= 17){
+    const totalFrameSyms = 32 + 8 * n;
+    if(pos + totalFrameSyms * N &gt; x.length) return null;
+    const bodyAndCrc = bitsToBytes(readFskBits(x, pos + 16 * N, (n + 2) * 8, N, cfg, sr));
+    const msgBytes = bodyAndCrc.subarray(0, n);
+    const recvCrc = (bodyAndCrc[n] &lt;&lt; 8) | bodyAndCrc[n + 1];
+    const calcCrc = crc16([n, ...msgBytes]);
+    if(recvCrc !== calcCrc) return null;
+
+    return { kind: &#x27;text&#x27;, text: String.fromCharCode(...msgBytes) };
+  }
+
+  return null;
+}
+
+function findFSKFrame(x, sr, cfg){
+  const N = Math.round(cfg.sym * sr);
+  const st = Math.max(1, Math.round(N / 8));
+  const L = x.length - 16 * N;
+  if(L &lt;= 0) return [];
+
+  const S = [];
+  for(let s = 0; s &lt;= L; s += st) S.push(fskPreScore(x, s, N, cfg, sr));
+
+  const found = [];
+  for(let t = 0; t &lt; 16; t++){
+    let bi = -1, bv = 0;
+    for(let i = 0; i &lt; S.length; i++){
+      if(S[i] &gt; bv){ bv = S[i]; bi = i; }
+    }
+    if(bi &lt; 0 || bv &lt; 4.6) break;
+    let lo = bi, hi = bi;
+    while(lo &gt; 0 &amp;&amp; S[lo - 1] &gt;= bv - 0.15) lo--;
+    while(hi &lt; S.length - 1 &amp;&amp; S[hi + 1] &gt;= bv - 0.15) hi++;
+    const decoded = decodeFSKAt(x, Math.round((lo + hi) / 2) * st, N, cfg, sr);
+    if(decoded) found.push(decoded);
+    for(let i = Math.max(0, bi - 24); i &lt;= Math.min(S.length - 1, bi + 24); i++) S[i] = 0;
+  }
+  return found;
+}
+
+class DecFSK {
+  constructor(sr, cfg, onFrame){
+    this.sr = sr;
+    this.cfg = cfg;
+    this.sym = cfg.sym;
+    this.modeName = cfg.label;
+    this.onFrame = onFrame;
+    this.cap = Math.round(sr * 12);
+    this.ring = new Float32Array(this.cap);
+    this.wp = 0;
+    this.filled = 0;
+    this.sinceScan = 0;
+    this.scanStep = Math.round(sr * 0.25);
+  }
+  push(chunk){
+    const len = this.cap;
+    for(let i = 0; i &lt; chunk.length; i++){
+      this.ring[this.wp] = chunk[i];
+      this.wp = (this.wp + 1) % len;
+    }
+    this.filled = Math.min(len, this.filled + chunk.length);
+    this.sinceScan += chunk.length;
+    if(this.sinceScan &gt;= this.scanStep){
+      this.sinceScan = 0;
+      this.scanRecent();
+    }
+  }
+  getRecent(maxSec = 4.5){
+    const want = Math.min(this.filled, Math.round(this.sr * maxSec));
+    if(want &lt;= 0) return new Float32Array(0);
+    const out = new Float32Array(want);
+    const start = (this.wp - want + this.cap) % this.cap;
+    if(start + want &lt;= this.cap){
+      out.set(this.ring.subarray(start, start + want));
+    } else {
+      const first = this.cap - start;
+      out.set(this.ring.subarray(start, this.cap), 0);
+      out.set(this.ring.subarray(0, want - first), first);
+    }
+    return out;
+  }
+  scanRecent(){
+    const seg = this.getRecent(4.5);
+    if(seg.length &lt; Math.round(this.cfg.sym * this.sr * 16)) return [];
+    const frames = findFSKFrame(seg, this.sr, this.cfg);
+    if(frames.length &amp;&amp; this.onFrame){
+      for(const f of frames) this.onFrame(f, this);
+    }
+    return frames;
+  }
+}
+
+const wake = () =&gt; { try{ navigator.wakeLock &amp;&amp; navigator.wakeLock.request(&#x27;screen&#x27;).catch(() =&gt; {}); }catch(e){} };
+
+// ================= SENDER LOGIC (ZERO-DELAY STREAMING + BROADCASTING MODE) =================
+let sc = null, sOutGain = null, sActiveSources = [], sm = null, sfid = 0, mv = &#x27;auto&#x27;;
+let sPackets4 = [], sPackets1 = [], sStreamTimer = null, sStopTimeout = null, sIsStopping = false;
+let sConfirmedCount = 0;
+
+function syncBroadcastUI(){
+  const isBcast = $(&#x27;bcast&#x27;).checked;
+  $(&#x27;bcastBox&#x27;).classList.toggle(&#x27;on&#x27;, isBcast);
+  $(&#x27;twoRow&#x27;).style.opacity = isBcast ? &#x27;0.5&#x27; : &#x27;1&#x27;;
+  $(&#x27;two&#x27;).disabled = isBcast;
+  const bS = $(&#x27;bS&#x27;);
+  if(isBcast){
+    bS.textContent = &#x27;📻 Start Broadcasting&#x27;;
+    bS.classList.add(&#x27;bcast-active&#x27;);
+    if(!sc){
+      $(&#x27;sInfo&#x27;).textContent = &#x27;Broadcasting Mode ON: audio loops continuously for everyone in the room until you tap Stop Broadcasting.&#x27;;
+    }
+  } else {
+    bS.textContent = &#x27;🔊 Beam Sound&#x27;;
+    bS.classList.remove(&#x27;bcast-active&#x27;);
+    if(!sc){
+      $(&#x27;sInfo&#x27;).textContent = &#x27;Pick a file or type a message, then tap Beam Sound. Audio auto-mutes the moment transfer finishes!&#x27;;
+    }
+  }
+}
+$(&#x27;bcast&#x27;).addEventListener(&#x27;change&#x27;, syncBroadcastUI);
+
+function updateEstimate(){
+  const f = $(&#x27;file&#x27;).files[0], txt = $(&#x27;txt&#x27;).value;
+  const est = $(&#x27;sEst&#x27;);
+  const rawBytes = f ? f.size : (txt ? new TextEncoder().encode(txt).length : 0);
+  if(!rawBytes){ est.hidden = true; return; }
+  const approxPacked = Math.max(20, Math.round(rawBytes * 0.65) + 25);
+  const pkts4 = Math.ceil(approxPacked / PL4);
+  const pktsFSK = Math.ceil(approxPacked / PL_FSK);
+  const pkts1 = Math.ceil(approxPacked / PL1);
+  const isShort = !f &amp;&amp; !$(&#x27;spass&#x27;).value &amp;&amp; txt.length &gt;= 1 &amp;&amp; txt.length &lt;= 17 &amp;&amp; [...txt].every(c =&gt; c.charCodeAt(0) &lt; 256);
+
+  const symMap = {
+    auto:  { t: pkts4 * 39 * 0.008, label: &#x27;Auto (starts at OFDM Turbo 8ms)&#x27; },
+    t:     { t: pkts4 * 39 * 0.008, label: &#x27;Turbo 4-Tone OFDM (8ms)&#x27; },
+    f:     { t: pkts4 * 39 * 0.014, label: &#x27;Fast 4-Tone OFDM (14ms)&#x27; },
+    b:     { t: pkts4 * 39 * 0.026, label: &#x27;Balanced 4-Tone OFDM (26ms)&#x27; },
+    fsk_f: { t: isShort ? (32 + 8 * txt.length) * 0.015 : pktsFSK * 272 * 0.015, label: &#x27;FSK Hyper (3-Tone · 15ms)&#x27; },
+    fsk_c: { t: isShort ? (32 + 8 * txt.length) * 0.032 : pktsFSK * 272 * 0.032, label: &#x27;FSK Classic (3-Tone · 32ms)&#x27; },
+    &#x27;.05&#x27;: { t: pkts1 * 44 * 0.050, label: &#x27;Robust 1-Tone MFSK (50ms)&#x27; },
+    n:     { t: pkts1 * 44 * 0.300, label: &#x27;Narrow 1-Tone MFSK (300ms)&#x27; }
+  };
+  const m = symMap[mv] || symMap.auto;
+  const spd = Math.round(rawBytes / Math.max(0.15, m.t));
+  est.hidden = false;
+  est.textContent = `⚡ Est. loop time: ~${fmtTime(m.t)} (${fmt(spd)}/s) in ${m.label}`;
+}
+
+function selectModeChip(btn){
+  if(!btn || !btn.dataset.v) return;
+  document.querySelectorAll(&#x27;#chips button&#x27;).forEach(x =&gt; x.classList.remove(&#x27;on&#x27;));
+  btn.classList.add(&#x27;on&#x27;);
+  mv = btn.dataset.v;
+  updateEstimate();
+}
+$(&#x27;chips&#x27;).addEventListener(&#x27;click&#x27;, e =&gt; {
+  const btn = e.target.closest(&#x27;button[data-v]&#x27;);
+  if(btn) selectModeChip(btn);
+});
+
+const pickFile = () =&gt; {
+  const f = $(&#x27;file&#x27;).files[0];
+  $(&#x27;fn&#x27;).textContent = f ? `${f.name} · ${fmt(f.size)}` : &#x27;Tap to choose a file&#x27;;
+  updateEstimate();
+};
+$(&#x27;file&#x27;).addEventListener(&#x27;change&#x27;, pickFile);
+$(&#x27;txt&#x27;).addEventListener(&#x27;input&#x27;, updateEstimate);
+$(&#x27;spass&#x27;).addEventListener(&#x27;input&#x27;, updateEstimate);
+[&#x27;dragover&#x27;, &#x27;drop&#x27;].forEach(ev =&gt; $(&#x27;drop&#x27;).addEventListener(ev, e =&gt; {
+  e.preventDefault();
+  if(ev === &#x27;drop&#x27; &amp;&amp; e.dataTransfer &amp;&amp; e.dataTransfer.files.length){
+    $(&#x27;file&#x27;).files = e.dataTransfer.files;
+    pickFile();
+  }
+}));
+
+function hardSilenceSender(msg){
+  if(sIsStopping &amp;&amp; !msg) return;
+  sIsStopping = true;
+  try{
+    if(sStreamTimer){ clearInterval(sStreamTimer); sStreamTimer = null; }
+    if(sStopTimeout){ clearTimeout(sStopTimeout); sStopTimeout = null; }
+    if(sOutGain &amp;&amp; sc){
+      try{
+        sOutGain.gain.cancelScheduledValues(sc.currentTime);
+        sOutGain.gain.setValueAtTime(0, sc.currentTime);
+      }catch(e){}
+      sOutGain.gain.value = 0;
+      try{ sOutGain.disconnect(); }catch(e){}
+    }
+    for(const node of sActiveSources){
+      try{ node.onended = null; node.stop(0); node.disconnect(); }catch(e){}
+    }
+    sActiveSources = [];
+    if(sm){ sm.getTracks().forEach(t =&gt; { try{ t.stop(); }catch(e){} }); sm = null; }
+    if(sc){ const oldSc = sc; sc = null; oldSc.close().catch(() =&gt; {}); }
+  }catch(e){}
+  sOutGain = null;
+  $(&#x27;bX&#x27;).hidden = true;
+  $(&#x27;bX&#x27;).textContent = &#x27;⏹ Stop&#x27;;
+  $(&#x27;bS&#x27;).hidden = false;
+  $(&#x27;bcast&#x27;).disabled = false;
+  syncBroadcastUI();
+  $(&#x27;pS&#x27;).classList.remove(&#x27;live&#x27;);
+  if(msg){
+    $(&#x27;sInfo&#x27;).textContent = msg;
+    if(msg.includes(&#x27;✓&#x27;)) burstConfetti();
+  }
+}
+
+function onAck(b){
+  if(b[0] !== sfid) return;
+  const g = (b[1] &lt;&lt; 8) | b[2], t = (b[3] &lt;&lt; 8) | b[4], flags = b[5], firstMiss = (b[6] &lt;&lt; 8) | b[7];
+  const isBroadcasting = $(&#x27;bcast&#x27;).checked;
+
+  // In Broadcasting Mode, ignore receiver completion/progress ACKs so the broadcast keeps running for everyone else
+  if(isBroadcasting){
+    if(flags &amp; 1){
+      sConfirmedCount++;
+      $(&#x27;sInfo&#x27;).textContent = `📻 Broadcasting live (${sConfirmedCount} confirmation ping(s) heard) — keeping audio active for other receivers until you turn it off…`;
+    }
+    return;
+  }
+
+  $(&#x27;sb&#x27;).style.width = Math.min(100, Math.round(100 * g / Math.max(1, t))) + &#x27;%&#x27;;
+  if(flags &amp; 1){
+    $(&#x27;sb&#x27;).style.width = &#x27;100%&#x27;;
+    hardSilenceSender(&#x27;Delivered ✓ Receiver confirmed the full transfer — audio silenced!&#x27;);
+  } else {
+    $(&#x27;sInfo&#x27;).textContent = `Receiver got ${g}/${t} packets (${Math.round(100 * g / t)}%) · next missing #${firstMiss}…`;
+  }
+}
+
+$(&#x27;bS&#x27;).addEventListener(&#x27;click&#x27;, async () =&gt; {
+  hardSilenceSender();
+  sIsStopping = false;
+  sConfirmedCount = 0;
+
+  let name, data;
+  const f = $(&#x27;file&#x27;).files[0], t = $(&#x27;txt&#x27;).value, pass = $(&#x27;spass&#x27;).value;
+  if(f){ name = f.name; data = new Uint8Array(await f.arrayBuffer()); }
+  else if(t){ name = &#x27;message.txt&#x27;; data = new TextEncoder().encode(t); }
+  else { $(&#x27;sInfo&#x27;).textContent = &#x27;Choose a file or type a message first.&#x27;; return; }
+
+  const isBroadcasting = $(&#x27;bcast&#x27;).checked;
+  $(&#x27;sInfo&#x27;).textContent = isBroadcasting ? &#x27;Starting continuous sonic broadcast…&#x27; : &#x27;Preparing high-speed sonic stream…&#x27;;
+  const isShortCompat = !f &amp;&amp; !pass &amp;&amp; t.length &gt;= 1 &amp;&amp; t.length &lt;= 17 &amp;&amp; [...t].every(c =&gt; c.charCodeAt(0) &lt; 256);
+  const packed = await packPayload(name, data, pass);
+  sPackets4 = makePackets(packed, PL4);
+  sPackets1 = makePackets(packed, PL1);
+
+  const fid = sPackets4[0][0];
+  sPackets1.forEach(p =&gt; {
+    p[0] = fid;
+    const c = crc16(p.subarray(0, 17));
+    p[17] = c &gt;&gt; 8; p[18] = c &amp; 255;
+  });
+  sfid = fid;
+  $(&#x27;sb&#x27;).style.width = &#x27;0%&#x27;;
+
+  const buildFSKItems = cfg =&gt; {
+    if(isShortCompat){
+      return [{ syms: fskShortTextSymbols(t), sym: cfg.sym, f0: cfg.f0, f1: cfg.f1, fsy: cfg.fsy, fsk: true }];
+    }
+    const totChunks = Math.ceil(packed.length / PL_FSK);
+    const out = [];
+    for(let i = 0; i &lt; totChunks; i++){
+      const chunk = packed.subarray(i * PL_FSK, Math.min(packed.length, (i + 1) * PL_FSK));
+      out.push({ syms: fskChunkSymbols(fid, i, totChunks, chunk), sym: cfg.sym, f0: cfg.f0, f1: cfg.f1, fsy: cfg.fsy, fsk: true });
+    }
+    return out;
+  };
+
+  const cs = $(&#x27;ctr&#x27;).value === &#x27;s&#x27; ? CENT : [CENT[+$(&#x27;ctr&#x27;).value]];
+  const buildPass = mode =&gt; {
+    if(mode === &#x27;t&#x27;) return sPackets4.map(b =&gt; ({ b, sym: 0.008, chords: true }));
+    if(mode === &#x27;f&#x27;) return sPackets4.map(b =&gt; ({ b, sym: 0.014, chords: true }));
+    if(mode === &#x27;b&#x27;) return sPackets4.map(b =&gt; ({ b, sym: 0.026, chords: true }));
+    if(mode === &#x27;fsk_f&#x27;) return buildFSKItems(FSK_FAST_CFG);
+    if(mode === &#x27;fsk_c&#x27;) return buildFSKItems(FSK_CLASSIC_CFG);
+    if(mode === &#x27;.05&#x27;) return sPackets1.map(b =&gt; ({ b, sym: 0.05, t: WIDE1 }));
+    if(mode === &#x27;n&#x27;) return cs.flatMap(c =&gt; sPackets1.map(b =&gt; ({ b, sym: 0.3, t: nt(c, 0.3) })));
+    return [];
+  };
+
+  const sequence = mv === &#x27;auto&#x27; ? [&#x27;t&#x27;, &#x27;f&#x27;, &#x27;b&#x27;, &#x27;.05&#x27;] : [mv];
+  const items = sequence.flatMap(buildPass);
+
+  sc = new (window.AudioContext || window.webkitAudioContext)();
+  if(sc.state === &#x27;suspended&#x27;) await sc.resume();
+
+  sOutGain = sc.createGain();
+  sOutGain.gain.value = 1.0;
+  sOutGain.connect(sc.destination);
+
+  // Only open two-way ACK listener when NOT in Broadcasting Mode
+  let two = false;
+  if(!isBroadcasting &amp;&amp; $(&#x27;two&#x27;).checked &amp;&amp; !(isShortCompat &amp;&amp; (mv === &#x27;fsk_c&#x27; || mv === &#x27;fsk_f&#x27;))){
+    try{
+      sm = await navigator.mediaDevices.getUserMedia(MIC);
+      const s = sc.createMediaStreamSource(sm);
+      const sp = sc.createScriptProcessor(4096, 1, 1);
+      const mute = sc.createGain();
+      mute.gain.value = 0;
+      const ds = [
+        new Dec1(sc.sampleRate, 0.04, onAck, WIDE1.map(f =&gt; f + AO)),
+        new Dec1(sc.sampleRate, 0.25, onAck, nt(4600, 0.25))
+      ];
+      sp.onaudioprocess = e =&gt; {
+        const x = e.inputBuffer.getChannelData(0);
+        ds.forEach(d =&gt; d.push(x));
+      };
+      s.connect(sp); sp.connect(mute); mute.connect(sc.destination);
+      two = true;
+    }catch(e){}
+  }
+
+  // Zero-delay streaming scheduler:
+  // - In Broadcasting Mode: maxPasses = Infinity (never stops on ACKs or pass limits; runs until manually stopped)
+  // - In Normal Mode: stops immediately on ACK (two-way) or after 2 passes (one-way)
+  const BATCH_SIZE = items[0] &amp;&amp; items[0].fsk ? 4 : 16;
+  let itemCursor = 0;
+  let nextPlayTime = sc.currentTime + 0.02;
+  let passCount = 0;
+  const maxPasses = (isBroadcasting || two) ? Infinity : 2;
+
+  const scheduleAhead = () =&gt; {
+    if(!sc || sIsStopping || !sOutGain) return;
+    while(nextPlayTime &lt; sc.currentTime + 0.65){
+      if(itemCursor &gt;= items.length){
+        passCount++;
+        if(passCount &gt;= maxPasses){
+          const remMs = Math.max(0, (nextPlayTime - sc.currentTime) * 1000) + 40;
+          if(!sStopTimeout){
+            sStopTimeout = setTimeout(() =&gt; {
+              $(&#x27;sb&#x27;).style.width = &#x27;100%&#x27;;
+              hardSilenceSender(&#x27;Transfer finished ✓ Audio silenced.&#x27;);
+            }, remMs);
+          }
+          return;
+        }
+        itemCursor = 0;
+      }
+      const slice = items.slice(itemCursor, itemCursor + BATCH_SIZE);
+      const isFirstChunk = (passCount === 0 &amp;&amp; itemCursor === 0);
+      itemCursor += slice.length;
+
+      const buf = renderAudio(slice, sc.sampleRate, 0.88, isFirstChunk ? 0.03 : 0.005);
+      const ab = sc.createBuffer(1, buf.length, sc.sampleRate);
+      ab.copyToChannel(buf, 0);
+      const node = sc.createBufferSource();
+      node.buffer = ab;
+      node.connect(sOutGain);
+      const startAt = Math.max(sc.currentTime + 0.005, nextPlayTime);
+      node.start(startAt);
+      nextPlayTime = startAt + ab.duration;
+      sActiveSources.push(node);
+      node.onended = () =&gt; {
+        const idx = sActiveSources.indexOf(node);
+        if(idx &gt;= 0) sActiveSources.splice(idx, 1);
+      };
+
+      if(isBroadcasting){
+        const loopPct = Math.max(4, Math.round(100 * (itemCursor / items.length)));
+        $(&#x27;sb&#x27;).style.width = loopPct + &#x27;%&#x27;;
+        $(&#x27;sInfo&#x27;).textContent = `📻 Broadcasting live · Loop #${passCount + 1} (${loopPct}%) — keeps playing for everyone until you turn it off.`;
+      } else if(!two){
+        const pct = Math.min(99, Math.round(100 * ((passCount * items.length + itemCursor) / (items.length * maxPasses))));
+        $(&#x27;sb&#x27;).style.width = pct + &#x27;%&#x27;;
+      }
+    }
+  };
+
+  scheduleAhead();
+  sStreamTimer = setInterval(scheduleAhead, 120);
+  wake();
+
+  $(&#x27;bS&#x27;).hidden = true;
+  $(&#x27;bX&#x27;).hidden = false;
+  $(&#x27;bX&#x27;).textContent = isBroadcasting ? &#x27;⏹ Stop Broadcasting&#x27; : &#x27;⏹ Stop&#x27;;
+  $(&#x27;bcast&#x27;).disabled = true;
+  $(&#x27;pS&#x27;).classList.add(&#x27;live&#x27;);
+
+  const firstPassItems = buildPass(sequence[0]);
+  const symsPer = firstPassItems[0].fsk ? firstPassItems[0].syms.length : (firstPassItems[0].chords ? 39 : 44);
+  const passSec = Math.max(0.2, firstPassItems.length * symsPer * firstPassItems[0].sym);
+
+  if(isBroadcasting){
+    $(&#x27;sInfo&#x27;).textContent = `📻 Broadcasting live (~${fmtTime(passSec)} per loop) — keeps playing even after receivers complete until you tap Stop Broadcasting.`;
+  } else {
+    $(&#x27;sInfo&#x27;).textContent = `Streaming ${firstPassItems.length} frame(s) (~${fmtTime(passSec)} per pass). ` + (two ? &#x27;Will auto-silence upon confirmation…&#x27; : &#x27;One-way mode (auto-silences after 2 passes).&#x27;);
+  }
+});
+
+$(&#x27;bX&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+  const wasBcast = $(&#x27;bcast&#x27;).checked;
+  hardSilenceSender(wasBcast ? &#x27;Broadcast stopped &amp; silenced.&#x27; : &#x27;Stopped &amp; silenced.&#x27;);
+});
+
+// ================= RECEIVER LOGIC =================
+let rc = null, ms = null, an = null, st = null, decs = [], fskDecs = [];
+let ackBusy = false, lastAck = 0, rTimer = null, fskSeqMap = new Map(), lastFskText = &#x27;&#x27;;
+
+function drawSpectrum(){
+  const cv = $(&#x27;spec&#x27;);
+  if(!cv) return;
+  const g = cv.getContext(&#x27;2d&#x27;);
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth || 300, h = cv.clientHeight || 74;
+  if(cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)){
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+
+  if(rc &amp;&amp; an){
+    const bins = new Uint8Array(an.frequencyBinCount);
+    an.getByteFrequencyData(bins);
+    const maxBin = Math.min(bins.length - 1, Math.floor(8200 / (rc.sampleRate / an.fftSize)));
+    const grad = g.createLinearGradient(0, 0, w, 0);
+    grad.addColorStop(0, &#x27;#06b6d4&#x27;);
+    grad.addColorStop(0.45, &#x27;#8b5cf6&#x27;);
+    grad.addColorStop(0.75, &#x27;#ec4899&#x27;);
+    grad.addColorStop(1, &#x27;#f59e0b&#x27;);
+    g.fillStyle = grad;
+    const barCount = 56;
+    const step = Math.max(1, Math.floor(maxBin / barCount));
+    const bw = (w / barCount) - 2;
+    for(let i = 0; i &lt; barCount; i++){
+      let sum = 0;
+      for(let j = 0; j &lt; step; j++) sum += bins[i * step + j] || 0;
+      const v = (sum / step) / 255;
+      const bh = Math.max(3, v * (h - 6));
+      const x = i * (w / barCount);
+      g.beginPath();
+      if(g.roundRect) g.roundRect(x, h - bh, Math.max(2, bw), bh, 3);
+      else g.rect(x, h - bh, Math.max(2, bw), bh);
+      g.fill();
+    }
+  } else {
+    g.strokeStyle = &#x27;rgba(139,92,246,0.28)&#x27;;
+    g.lineWidth = 2;
+    g.beginPath();
+    for(let x = 0; x &lt;= w; x += 6){
+      const y = h / 2 + Math.sin(x * 0.05 + Date.now() * 0.004) * 6;
+      if(x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+  requestAnimationFrame(drawSpectrum);
+}
+drawSpectrum();
+
+function renderDecodedOutput(name, data, modeLabel, elapsedSec){
+  const url = URL.createObjectURL(new Blob([data]));
+  const o = $(&#x27;out&#x27;); o.innerHTML = &#x27;&#x27;;
+  const a2 = document.createElement(&#x27;a&#x27;);
+  a2.href = url; a2.download = name;
+  a2.textContent = `🎉 Download ${name} (${fmt(data.length)})`;
+  o.append(a2);
+  if(/\.txt$/i.test(name)){
+    const p = document.createElement(&#x27;pre&#x27;);
+    p.style.whiteSpace = &#x27;pre-wrap&#x27;;
+    p.textContent = new TextDecoder().decode(data).slice(0, 2500);
+    o.append(p);
+  }
+  $(&#x27;rInfo&#x27;).textContent = `Done ✓ Received ${fmt(data.length)} via ${modeLabel} in ${elapsedSec}s!`;
+  burstConfetti();
+}
+
+function sendAck(done){
+  if(!rc || ackBusy || !st) return;
+  const g = st.got.size;
+  let firstMiss = st.tot;
+  for(let i = 0; i &lt; st.tot; i++){ if(!st.got.has(i)){ firstMiss = i; break; } }
+  const pl = new Uint8Array([done ? 1 : 0, firstMiss &gt;&gt; 8, firstMiss &amp; 255]);
+  const b = mkPkt(st.fid, st.tot, g, pl, PL1);
+  const nr = st.lastD &amp;&amp; st.lastD.sym &gt;= 0.25;
+  const x = renderAudio([nr ? { b, sym: 0.25, t: nt(4600, 0.25) } : { b, sym: 0.04, t: WIDE1.map(f =&gt; f + AO) }], rc.sampleRate, 0.75, 0.01);
+  const ab = rc.createBuffer(1, x.length, rc.sampleRate);
+  ab.copyToChannel(x, 0);
+  const s = rc.createBufferSource();
+  s.buffer = ab; s.connect(rc.destination);
+  ackBusy = true;
+  s.onended = () =&gt; { ackBusy = false; try{ s.disconnect(); }catch(e){} };
+  s.start();
+  lastAck = Date.now();
+}
+
+function updateReceiverTelemetry(){
+  if(!st || st.done) return;
+  const g = st.got.size, tot = st.tot, rem = tot - g;
+  const sym = st.lastSym || 0.008;
+  const symsPerPkt = st.plSize === PL4 ? 39 : (st.plSize === PL_FSK ? 272 : 44);
+  const pktDur = symsPerPkt * sym;
+
+  const elapsed = (Date.now() - st.startTime) / 1000;
+  const measuredPktsPerSec = (g &gt; 2 &amp;&amp; elapsed &gt; 0.2) ? (g / elapsed) : (1 / pktDur);
+  const effectivePktsPerSec = g &gt; 3 ? (0.75 * measuredPktsPerSec + 0.25 * (1 / pktDur)) : (1 / pktDur);
+
+  const etaSec = rem / Math.max(0.2, effectivePktsPerSec);
+  const bytesPerSec = effectivePktsPerSec * st.plSize;
+  const estTotalBytes = tot * st.plSize;
+
+  $(&#x27;rEtaBox&#x27;).hidden = false;
+  $(&#x27;rEta&#x27;).textContent = fmtTime(etaSec);
+  $(&#x27;rSpd&#x27;).textContent = fmt(Math.round(bytesPerSec)) + &#x27;/s&#x27;;
+  $(&#x27;rSz&#x27;).textContent = &#x27;~&#x27; + fmt(estTotalBytes);
+
+  const modeLabel = (st.lastD &amp;&amp; st.lastD.modeName)
+    ? st.lastD.modeName
+    : (st.plSize === PL4 ? `4-Tone OFDM (${Math.round(sym * 1000)}ms)` : `MFSK (${Math.round(sym * 1000)}ms)`);
+  $(&#x27;rInfo&#x27;).textContent = `Packet ${g} of ${tot} (${Math.round(100 * g / tot)}%) · ${modeLabel} · ~${fmtTime(etaSec)} left`;
+}
+
+function onPkt(b, sym, d, plSize){
+  const fid = b[0], idx = (b[1] &lt;&lt; 8) | b[2], tot = (b[3] &lt;&lt; 8) | b[4];
+  if(!tot || idx &gt;= tot) return;
+
+  if(st &amp;&amp; st.fid !== fid){
+    if(st.pf === fid) st.pc++; else { st.pf = fid; st.pc = 1; }
+    if(st.pc &lt; 2) return;
+  }
+
+  if(!st || st.fid !== fid || st.plSize !== plSize){
+    st = {
+      fid, tot, plSize,
+      got: new Map(),
+      done: false,
+      pc: 0,
+      startTime: Date.now(),
+      lastSym: sym,
+      lastD: d
+    };
+    const T = $(&#x27;tiles&#x27;); T.innerHTML = &#x27;&#x27;;
+    if(tot &lt;= 1500){
+      st.c = [];
+      for(let i = 0; i &lt; tot; i++){ const e = document.createElement(&#x27;span&#x27;); T.append(e); st.c.push(e); }
+    }
+    st.got.set(idx, b.slice(5, 5 + plSize));
+    if(st.c) st.c[idx].className = &#x27;on&#x27;;
+    $(&#x27;pb&#x27;).style.width = (100 / tot) + &#x27;%&#x27;;
+    updateReceiverTelemetry();
+    if(tot === 1){ st.done = true; fin(st); }
+    return;
+  }
+
+  if(st.tot !== tot || st.done) return;
+  st.got.set(idx, b.slice(5, 5 + plSize));
+  st.lastD = d;
+  st.lastSym = sym;
+  if(st.c) st.c[idx].className = &#x27;on&#x27;;
+
+  const g = st.got.size;
+  $(&#x27;pb&#x27;).style.width = (100 * g / tot) + &#x27;%&#x27;;
+  updateReceiverTelemetry();
+
+  if(g === tot){
+    st.done = true;
+    $(&#x27;rEta&#x27;).textContent = &#x27;0s&#x27;;
+    fin(st);
+  } else if(Date.now() - lastAck &gt; 3500){
+    sendAck(false);
+  }
+}
+
+function onFSKFrame(frame, dec){
+  if(frame.kind === &#x27;text&#x27;){
+    if(lastFskText === frame.text &amp;&amp; $(&#x27;out&#x27;).children.length &gt; 0) return;
+    lastFskText = frame.text;
+    $(&#x27;pb&#x27;).style.width = &#x27;100%&#x27;;
+    $(&#x27;rEta&#x27;).textContent = &#x27;0s&#x27;;
+    const data = new TextEncoder().encode(frame.text);
+    renderDecodedOutput(&#x27;message.txt&#x27;, data, dec.modeName, &#x27;0.1&#x27;);
+    return;
+  }
+
+  if(frame.kind === &#x27;pkt&#x27;){
+    const { fid, seq, tot, data } = frame;
+    if(!st || st.fid !== fid || st.tot !== tot || st.plSize !== PL_FSK || st.done){
+      st = {
+        fid, tot, plSize: PL_FSK,
+        got: new Map(),
+        done: false,
+        startTime: Date.now(),
+        lastSym: dec.sym,
+        lastD: dec
+      };
+      fskSeqMap.clear();
+      const T = $(&#x27;tiles&#x27;); T.innerHTML = &#x27;&#x27;;
+      if(tot &lt;= 1500){
+        st.c = [];
+        for(let i = 0; i &lt; tot; i++){ const e = document.createElement(&#x27;span&#x27;); T.append(e); st.c.push(e); }
+      }
+    }
+    if(!fskSeqMap.has(seq)){
+      fskSeqMap.set(seq, data);
+      st.got.set(seq, data);
+      st.lastSym = dec.sym;
+      st.lastD = dec;
+      if(st.c &amp;&amp; st.c[seq]) st.c[seq].className = &#x27;on&#x27;;
+      const g = st.got.size;
+      $(&#x27;pb&#x27;).style.width = (100 * g / tot) + &#x27;%&#x27;;
+      updateReceiverTelemetry();
+
+      if(g === tot){
+        st.done = true;
+        $(&#x27;rEta&#x27;).textContent = &#x27;0s&#x27;;
+        let totalLen = 0;
+        for(let i = 0; i &lt; tot; i++) totalLen += st.got.get(i).length;
+        const merged = new Uint8Array(totalLen);
+        let off = 0;
+        for(let i = 0; i &lt; tot; i++){ const chunk = st.got.get(i); merged.set(chunk, off); off += chunk.length; }
+        st.a = merged;
+        fin(st);
+      } else if(Date.now() - lastAck &gt; 3500){
+        sendAck(false);
+      }
+    }
+  }
+}
+
+async function fin(s){
+  try{
+    if(!s.a){
+      const n = s.tot, a = new Uint8Array(n * s.plSize);
+      for(let i = 0; i &lt; n; i++) a.set(s.got.get(i), i * s.plSize);
+      s.a = a;
+    }
+    const a = s.a, len = new DataView(a.buffer).getUint32(1);
+    let d = a.subarray(5, 5 + len);
+    if(a[0] &amp; 2){
+      const p = $(&#x27;rpass&#x27;).value;
+      try{
+        d = new Uint8Array(await crypto.subtle.decrypt(
+          { name: &#x27;AES-GCM&#x27;, iv: d.slice(8, 20) },
+          await deriveAesKey(p, d.slice(0, 8)),
+          d.slice(20)
+        ));
+      }catch(e){
+        $(&#x27;rInfo&#x27;).textContent = p ? &#x27;Wrong passphrase. Fix it and tap Unlock.&#x27; : &#x27;Encrypted file received. Enter passphrase and tap Unlock.&#x27;;
+        $(&#x27;bU&#x27;).hidden = false;
+        return;
+      }
+    }
+    $(&#x27;bU&#x27;).hidden = true;
+    if((a[0] &amp; 1) &amp;&amp; typeof DecompressionStream !== &#x27;undefined&#x27;){
+      d = new Uint8Array(await streamPipe(d, DecompressionStream));
+    }
+    const nl = d[0];
+    const name = new TextDecoder().decode(d.subarray(1, 1 + nl));
+    const data = d.subarray(1 + nl);
+    const elapsed = ((Date.now() - s.startTime) / 1000).toFixed(1);
+    const modeLabel = (s.lastD &amp;&amp; s.lastD.modeName) ? s.lastD.modeName : &#x27;Acoustic Link&#x27;;
+    renderDecodedOutput(name, data, modeLabel, elapsed);
+    $(&#x27;pR&#x27;).classList.remove(&#x27;live&#x27;);
+
+    let k = 0;
+    const iv = setInterval(() =&gt; {
+      if(!ackBusy &amp;&amp; k &lt; 3){ sendAck(true); k++; }
+      else if(k &gt;= 3 &amp;&amp; !ackBusy){ clearInterval(iv); setTimeout(() =&gt; stopR(true), 600); }
+    }, 450);
+  }catch(e){
+    $(&#x27;rInfo&#x27;).textContent = &#x27;Received all packets but could not unpack file. Try again.&#x27;;
+    st = null;
+  }
+}
+
+function stopR(keep){
+  try{ clearInterval(rTimer); ms &amp;&amp; ms.getTracks().forEach(t =&gt; t.stop()); rc &amp;&amp; rc.close(); }catch(e){}
+  rc = ms = an = rTimer = null; decs = []; fskDecs = [];
+  $(&#x27;bL&#x27;).hidden = false;
+  $(&#x27;bY&#x27;).hidden = true;
+  $(&#x27;pR&#x27;).classList.remove(&#x27;live&#x27;);
+  $(&#x27;specTag&#x27;).textContent = &#x27;Idle&#x27;;
+  if(!keep){ $(&#x27;rInfo&#x27;).textContent = &#x27;Stopped.&#x27;; $(&#x27;rEtaBox&#x27;).hidden = true; }
+}
+
+$(&#x27;bL&#x27;).addEventListener(&#x27;click&#x27;, async () =&gt; {
+  try{ ms = await navigator.mediaDevices.getUserMedia(MIC); }
+  catch(e){ $(&#x27;rInfo&#x27;).textContent = &#x27;Microphone blocked or unavailable. Allow mic access in browser settings.&#x27;; return; }
+
+  st = null; fskSeqMap.clear(); lastFskText = &#x27;&#x27;;
+  $(&#x27;out&#x27;).innerHTML = &#x27;&#x27;; $(&#x27;tiles&#x27;).innerHTML = &#x27;&#x27;; $(&#x27;pb&#x27;).style.width = &#x27;0%&#x27;; $(&#x27;rEtaBox&#x27;).hidden = true;
+  wake();
+  rc = new (window.AudioContext || window.webkitAudioContext)();
+  if(rc.state === &#x27;suspended&#x27;) await rc.resume();
+
+  const s = rc.createMediaStreamSource(ms);
+  const hp = rc.createBiquadFilter(); hp.type = &#x27;highpass&#x27;; hp.frequency.value = 400;
+  an = rc.createAnalyser();
+  an.fftSize = 2048;
+  an.smoothingTimeConstant = 0.65;
+  $(&#x27;specTag&#x27;).textContent = &#x27;Live Mic&#x27;;
+
+  fskDecs = [
+    new DecFSK(rc.sampleRate, FSK_FAST_CFG, onFSKFrame),
+    new DecFSK(rc.sampleRate, FSK_CLASSIC_CFG, onFSKFrame)
+  ];
+
+  decs = [
+    new Dec4(rc.sampleRate, 0.008, onPkt),
+    new Dec4(rc.sampleRate, 0.014, onPkt),
+    new Dec4(rc.sampleRate, 0.026, onPkt),
+    ...fskDecs,
+    new Dec1(rc.sampleRate, 0.050, onPkt, WIDE1),
+    ...CENT.map(c =&gt; new Dec1(rc.sampleRate, 0.300, onPkt, nt(c, 0.300)))
+  ];
+
+  const sp = rc.createScriptProcessor(4096, 1, 1);
+  const mute = rc.createGain();
+  mute.gain.value = 0;
+  let prevPeak = 0;
+  sp.onaudioprocess = e =&gt; {
+    const d = e.inputBuffer.getChannelData(0);
+    let m = 0;
+    for(let i = 0; i &lt; d.length; i += 16) m = Math.max(m, Math.abs(d[i]));
+    $(&#x27;lv&#x27;).style.width = Math.min(100, m * 300) + &#x27;%&#x27;;
+    for(const x of decs) x.push(d);
+    if(prevPeak &gt; 0.035 &amp;&amp; m &lt; 0.012){
+      for(const fd of fskDecs) fd.scanRecent();
+    }
+    prevPeak = m;
+  };
+  s.connect(hp); hp.connect(an); hp.connect(sp); sp.connect(mute); mute.connect(rc.destination);
+
+  rTimer = setInterval(() =&gt; { if(st &amp;&amp; !st.done) updateReceiverTelemetry(); }, 1000);
+  $(&#x27;bL&#x27;).hidden = true;
+  $(&#x27;bY&#x27;).hidden = false;
+  $(&#x27;pR&#x27;).classList.add(&#x27;live&#x27;);
+  $(&#x27;rInfo&#x27;).textContent = &#x27;Listening… waiting for OFDM, MFSK, or 3-Tone FSK signal.&#x27;;
+});
+
+$(&#x27;bY&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; stopR(false));
+$(&#x27;bU&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; st &amp;&amp; fin(st));
+
+// Offline Loopback Self-Test
+$(&#x27;bTest&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+  const sr = 44100;
+  $(&#x27;rInfo&#x27;).textContent = &#x27;Running offline loopback test on OFDM + FSK…&#x27;;
+  let gotOfdm = false, gotFskHyper = false, gotFskClassic = false;
+
+  const d4 = new Dec4(sr, 0.008, b =&gt; { if(b[0] === 91) gotOfdm = true; });
+  const dFskH = new DecFSK(sr, FSK_FAST_CFG, frame =&gt; { if(frame.kind === &#x27;text&#x27; &amp;&amp; frame.text === &#x27;FSK_HYPER_OK&#x27;) gotFskHyper = true; });
+  const dFskC = new DecFSK(sr, FSK_CLASSIC_CFG, frame =&gt; { if(frame.kind === &#x27;text&#x27; &amp;&amp; frame.text === &#x27;FSK_CLASSIC_OK&#x27;) gotFskClassic = true; });
+
+  const pkt4 = mkPkt(91, 1, 0, new TextEncoder().encode(&#x27;OFDM_FAST_TEST&#x27;), PL4);
+  const wav4 = renderAudio([{ b: pkt4, sym: 0.008, chords: true }], sr);
+  const wavFskH = synthFSK(fskShortTextSymbols(&#x27;FSK_HYPER_OK&#x27;), FSK_FAST_CFG.sym, FSK_FAST_CFG.f0, FSK_FAST_CFG.f1, FSK_FAST_CFG.fsy, sr);
+  const wavFskC = synthFSK(fskShortTextSymbols(&#x27;FSK_CLASSIC_OK&#x27;), FSK_CLASSIC_CFG.sym, FSK_CLASSIC_CFG.f0, FSK_CLASSIC_CFG.f1, FSK_CLASSIC_CFG.fsy, sr);
+
+  for(let i = 0; i &lt; wav4.length; i += 4096) d4.push(wav4.subarray(i, Math.min(wav4.length, i + 4096)));
+  for(let i = 0; i &lt; wavFskH.length; i += 4096) dFskH.push(wavFskH.subarray(i, Math.min(wavFskH.length, i + 4096)));
+  for(let i = 0; i &lt; wavFskC.length; i += 4096) dFskC.push(wavFskC.subarray(i, Math.min(wavFskC.length, i + 4096)));
+  dFskH.scanRecent();
+  dFskC.scanRecent();
+
+  const allPass = gotOfdm &amp;&amp; gotFskHyper &amp;&amp; gotFskClassic;
+  $(&#x27;rInfo&#x27;).textContent = `Loopback complete: OFDM=${gotOfdm ? &#x27;PASS ✓&#x27; : &#x27;FAIL&#x27;}, FSK Hyper=${gotFskHyper ? &#x27;PASS ✓&#x27; : &#x27;FAIL&#x27;}, FSK Classic=${gotFskClassic ? &#x27;PASS ✓&#x27; : &#x27;FAIL&#x27;}.`;
+  if(allPass) burstConfetti();
+});
+
+// Tab Switching
+const switchTab = sendActive =&gt; {
+  $(&#x27;pS&#x27;).hidden = !sendActive;
+  $(&#x27;pR&#x27;).hidden = sendActive;
+  $(&#x27;tS&#x27;).classList.toggle(&#x27;on&#x27;, sendActive);
+  $(&#x27;tR&#x27;).classList.toggle(&#x27;on&#x27;, !sendActive);
+};
+$(&#x27;tS&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; switchTab(true));
+$(&#x27;tR&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; switchTab(false));
+&lt;/script&gt;
+&lt;style&gt;.tabs{display:none!important}&lt;/style&gt;&lt;/body&gt;
+&lt;/html&gt;"></iframe></div></div>
+<div><h3 class="cap">Receiver</h3><p class="capd">Press Start Listening and allow the microphone.</p><div class="dev"><iframe title="SoundDrop receiver" allow="microphone; autoplay" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot;&gt;
+&lt;title&gt;SoundDrop Turbo · Sonic Studio&lt;/title&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin&gt;
+&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;style&gt;
+:root{
+  --bg:#f4f0ff;
+  --bg2:#fff5fb;
+  --fg:#18122b;
+  --card:rgba(255,255,255,0.86);
+  --card-solid:#ffffff;
+  --ln:rgba(124,58,237,0.20);
+  --ac:#7c3aed;
+  --ac2:#ec4899;
+  --ac3:#06b6d4;
+  --gold:#f59e0b;
+  --ok:#10b981;
+  --mut:#5b527a;
+  --shadow:0 16px 40px -12px rgba(124,58,237,0.22);
+  --glow:0 0 24px rgba(236,72,153,0.28);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=&quot;light&quot;]){
+    --bg:#0d091f;
+    --bg2:#170f33;
+    --fg:#f8f5ff;
+    --card:rgba(26,19,54,0.82);
+    --card-solid:#1d153d;
+    --ln:rgba(167,139,250,0.24);
+    --ac:#8b5cf6;
+    --ac2:#f43f5e;
+    --ac3:#22d3ee;
+    --gold:#fbbf24;
+    --ok:#34d399;
+    --mut:#b4a9d6;
+    --shadow:0 18px 46px -10px rgba(0,0,0,0.65);
+    --glow:0 0 28px rgba(34,211,238,0.25);
+  }
+}
+:root[data-theme=&quot;dark&quot;]{
+  --bg:#0d091f;
+  --bg2:#170f33;
+  --fg:#f8f5ff;
+  --card:rgba(26,19,54,0.82);
+  --card-solid:#1d153d;
+  --ln:rgba(167,139,250,0.24);
+  --ac:#8b5cf6;
+  --ac2:#f43f5e;
+  --ac3:#22d3ee;
+  --gold:#fbbf24;
+  --ok:#34d399;
+  --mut:#b4a9d6;
+  --shadow:0 18px 46px -10px rgba(0,0,0,0.65);
+  --glow:0 0 28px rgba(34,211,238,0.25);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:inherit}
+body{
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);
+  color:var(--fg);
+  font:15px/1.5 &quot;Plus Jakarta Sans&quot;,system-ui,-apple-system,&quot;Segoe UI&quot;,sans-serif;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* Floating Animated Aurora Blobs */
+.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(68px);opacity:0.46;animation:floatBlob 14s ease-in-out infinite alternate}
+.b1{width:340px;height:340px;background:radial-gradient(circle,#8b5cf6,#ec4899);top:-80px;left:-90px}
+.b2{width:300px;height:300px;background:radial-gradient(circle,#06b6d4,#3b82f6);bottom:5%;right:-70px;animation-delay:-4s}
+.b3{width:240px;height:240px;background:radial-gradient(circle,#f59e0b,#ec4899);top:42%;left:55%;animation-delay:-8s;opacity:0.30}
+@keyframes floatBlob{
+  0%{transform:translate(0,0) scale(1) rotate(0deg)}
+  50%{transform:translate(28px,-24px) scale(1.08) rotate(12deg)}
+  100%{transform:translate(-18px,30px) scale(0.95) rotate(-10deg)}
+}
+
+/* Confetti Celebration Canvas */
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+
+main{position:relative;z-index:2;max-width:560px;margin:0 auto;padding:18px 14px 48px}
+
+header{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+  background:var(--card);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--ln);
+  border-radius:22px;
+  padding:12px 14px;
+  box-shadow:var(--shadow);
+}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 55%,#06b6d4 100%);
+  border-radius:16px;
+  width:50px;
+  height:50px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  flex-shrink:0;
+  box-shadow:0 8px 20px rgba(236,72,153,0.35);
+  animation:logoPop 3.5s ease-in-out infinite;
+}
+@keyframes logoPop{0%,100%{transform:rotate(-2deg) scale(1)}50%{transform:rotate(3deg) scale(1.05)}}
+h1{
+  font-family:&quot;Fredoka&quot;,system-ui,sans-serif;
+  font-size:21px;
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  letter-spacing:-0.01em;
+}
+.badge{
+  font-family:&quot;Plus Jakarta Sans&quot;,sans-serif;
+  font-size:10px;
+  background:linear-gradient(90deg,#ec4899,#8b5cf6,#06b6d4);
+  color:#fff;
+  padding:3px 9px;
+  border-radius:99px;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  box-shadow:0 3px 10px rgba(236,72,153,0.3);
+}
+.s{color:var(--mut);margin:2px 0 0;font-size:12.5px;font-weight:500}
+
+.theme-btn{
+  border:1px solid var(--ln);
+  background:var(--card-solid);
+  color:var(--fg);
+  border-radius:99px;
+  padding:8px 12px;
+  font-size:12.5px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  flex-shrink:0;
+}
+.theme-btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:var(--glow)}
+.theme-btn:active{transform:scale(0.95)}
+
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  border:1px solid var(--ln);
+  border-radius:16px;
+  padding:5px;
+  margin-bottom:14px;
+  box-shadow:var(--shadow);
+}
+button{
+  font:inherit;
+  border:0;
+  border-radius:12px;
+  padding:11px 14px;
+  background:transparent;
+  color:var(--fg);
+  cursor:pointer;
+  touch-action:manipulation;
+  user-select:none;
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1),background .2s,box-shadow .2s,border-color .2s;
+}
+button:active{transform:scale(0.97)}
+.tabs button{font-family:&quot;Fredoka&quot;,sans-serif;font-size:15px;font-weight:600;color:var(--mut)}
+.tabs .on{
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%);
+  color:#fff;
+  box-shadow:0 6px 18px rgba(124,58,237,0.35);
+}
+
+.card{
+  background:var(--card);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--ln);
+  border-radius:24px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+.card&gt;*{margin-top:13px}.card&gt;*:first-child{margin-top:0}
+
+.drop{
+  display:block;
+  border:2.5px dashed rgba(139,92,246,0.45);
+  background:linear-gradient(135deg,rgba(139,92,246,0.07),rgba(236,72,153,0.07),rgba(6,182,212,0.07));
+  border-radius:18px;
+  padding:18px 14px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+}
+.drop:hover{
+  border-color:#ec4899;
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(236,72,153,0.16);
+}
+.drop-icon{font-size:26px;display:block;margin-bottom:3px}
+.drop b{display:block;word-break:break-all;font-size:15px;color:var(--fg)}
+.drop small,small{color:var(--mut);font-weight:500}
+
+input[type=password],textarea,select{
+  width:100%;
+  box-sizing:border-box;
+  font:inherit;
+  padding:11px 13px;
+  border-radius:14px;
+  border:1.5px solid var(--ln);
+  background:var(--card-solid);
+  color:var(--fg);
+  transition:border-color .2s,box-shadow .2s;
+}
+input[type=password]:focus,textarea:focus,select:focus{
+  outline:none;
+  border-color:#8b5cf6;
+  box-shadow:0 0 0 3px rgba(139,92,246,0.2);
+}
+select{width:auto;padding:6px 10px;font-size:13.5px;font-weight:600}
+textarea{min-height:58px;resize:vertical}
+
+.sec-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:7px;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:7px;position:relative;z-index:3}
+.chips button{
+  border:1.5px solid var(--ln);
+  background:var(--card-solid);
+  color:var(--fg);
+  padding:8px 12px;
+  font-size:12.5px;
+  font-weight:700;
+  border-radius:99px;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+.chips button:hover{transform:translateY(-2px);border-color:#ec4899}
+.chips .on{
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 5px 15px rgba(236,72,153,0.34);
+}
+.chips button[data-v^=&quot;fsk&quot;].on{
+  background:linear-gradient(135deg,#06b6d4,#3b82f6);
+  box-shadow:0 5px 15px rgba(6,182,212,0.35);
+}
+.chips button[data-v=&quot;.05&quot;].on,.chips button[data-v=&quot;n&quot;].on{
+  background:linear-gradient(135deg,#f59e0b,#ef4444);
+  box-shadow:0 5px 15px rgba(245,158,11,0.35);
+}
+
+.go{
+  width:100%;
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%);
+  background-size:180% 180%;
+  animation:gradShift 5s ease infinite;
+  color:#fff;
+  font-family:&quot;Fredoka&quot;,sans-serif;
+  font-size:16.5px;
+  font-weight:600;
+  padding:14px 18px;
+  border-radius:16px;
+  box-shadow:0 10px 24px rgba(236,72,153,0.34);
+  letter-spacing:0.01em;
+}
+.go:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 14px 30px rgba(124,58,237,0.42)}
+.go.bcast-active{
+  background:linear-gradient(135deg,#06b6d4 0%,#3b82f6 50%,#8b5cf6 100%);
+  background-size:180% 180%;
+  box-shadow:0 10px 24px rgba(6,182,212,0.36);
+}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.btn-stop{
+  background:linear-gradient(135deg,#ef4444,#f97316);
+  color:#fff;
+  font-weight:700;
+  border:0 !important;
+  box-shadow:0 6px 16px rgba(239,68,68,0.3);
+}
+.btn-test{
+  background:linear-gradient(135deg,rgba(6,182,212,0.14),rgba(139,92,246,0.14));
+  border:1.5px solid rgba(6,182,212,0.45) !important;
+  color:var(--fg);
+  font-weight:700;
+  font-size:13px;
+}
+
+.bar{height:10px;background:rgba(139,92,246,0.14);border-radius:99px;overflow:hidden;position:relative}
+.bar i{
+  display:block;
+  height:100%;
+  width:0;
+  border-radius:99px;
+  background:linear-gradient(90deg,#06b6d4,#8b5cf6,#ec4899,#f59e0b);
+  background-size:200% 100%;
+  animation:shimmer 2s linear infinite;
+  transition:width .22s ease-out;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:0% 0}}
+
+/* Playful Equalizer + Pulse Radar */
+.radar{display:none;position:relative;height:96px;place-items:center}
+.live .radar{display:grid}
+.radar i{
+  position:absolute;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:2.5px solid #ec4899;
+  opacity:0;
+  animation:p 2.1s infinite;
+}
+.radar i:nth-child(2){border-color:#06b6d4;animation-delay:.7s}
+.radar i:nth-child(3){border-color:#8b5cf6;animation-delay:1.4s}
+.radar-core{
+  z-index:1;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  color:#fff;
+  padding:10px 16px;
+  border-radius:99px;
+  box-shadow:0 8px 22px rgba(236,72,153,0.4);
+  font-size:20px;
+}
+.eq{display:flex;align-items:flex-end;gap:3px;height:18px}
+.eq b{display:block;width:3.5px;background:#fff;border-radius:3px;animation:eqDance .65s ease-in-out infinite alternate}
+.eq b:nth-child(2){animation-delay:.15s}
+.eq b:nth-child(3){animation-delay:.3s}
+.eq b:nth-child(4){animation-delay:.45s}
+@keyframes eqDance{0%{height:4px}100%{height:18px}}
+@keyframes p{0%{transform:scale(1);opacity:.85}100%{transform:scale(3.1);opacity:0}}
+
+.st{
+  margin:0;
+  font-size:13.5px;
+  font-weight:500;
+  background:rgba(139,92,246,0.08);
+  border:1px solid var(--ln);
+  padding:10px 12px;
+  border-radius:14px;
+}
+
+.eta-box{
+  background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(6,182,212,0.12),rgba(236,72,153,0.12));
+  border:1.5px solid var(--ln);
+  border-radius:16px;
+  padding:12px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  text-align:center;
+}
+.eta-box div span{display:block;font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.eta-box div b{display:block;font-family:&quot;Fredoka&quot;,sans-serif;font-size:17px;margin-top:2px;background:linear-gradient(90deg,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.tiles{display:flex;flex-wrap:wrap;gap:3px;max-height:92px;overflow:hidden;padding:2px}
+.tiles span{width:9px;height:9px;border-radius:3px;background:rgba(139,92,246,0.18);transition:transform .2s,background .2s}
+.tiles .on{
+  background:linear-gradient(135deg,#10b981,#06b6d4);
+  box-shadow:0 0 8px rgba(16,185,129,0.5);
+  animation:tilePop .28s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes tilePop{0%{transform:scale(0.3)}70%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+.out a{
+  display:block;
+  background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);
+  color:#fff;
+  text-align:center;
+  padding:14px;
+  border-radius:16px;
+  text-decoration:none;
+  font-family:&quot;Fredoka&quot;,sans-serif;
+  font-size:16px;
+  font-weight:600;
+  word-break:break-all;
+  box-shadow:0 10px 24px rgba(16,185,129,0.34);
+  animation:tilePop .35s cubic-bezier(.34,1.56,.64,1);
+}
+.out pre{
+  background:var(--card-solid);
+  border:1.5px solid var(--ln);
+  border-radius:14px;
+  padding:12px;
+  font-size:13px;
+  margin-top:10px;
+}
+
+.row{display:flex;gap:8px;flex-wrap:wrap}.row button+button{border:1px solid var(--ln)}[hidden]{display:none!important}
+label.two{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);font-weight:500;cursor:pointer}
+input[type=checkbox]{accent-color:#ec4899;width:16px;height:16px;flex-shrink:0}
+
+/* Broadcast Mode Card */
+.bcast-box{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1.5px solid var(--ln);
+  background:linear-gradient(135deg,rgba(6,182,212,0.08),rgba(139,92,246,0.08));
+  transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.bcast-box.on{
+  border-color:#06b6d4;
+  background:linear-gradient(135deg,rgba(6,182,212,0.18),rgba(139,92,246,0.16));
+  box-shadow:0 6px 18px rgba(6,182,212,0.18);
+}
+.bcast-info{display:flex;flex-direction:column;gap:2px}
+.bcast-title{font-weight:700;font-size:13.5px;color:var(--fg);display:flex;align-items:center;gap:6px}
+.bcast-sub{font-size:12px;color:var(--mut);line-height:1.35}
+.bcast-pill{
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  padding:2px 7px;
+  border-radius:99px;
+  background:rgba(6,182,212,0.2);
+  color:var(--ac3);
+}
+.switch{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.slider{
+  position:absolute;cursor:pointer;inset:0;
+  background:rgba(139,92,246,0.25);
+  border-radius:99px;
+  transition:.25s cubic-bezier(.34,1.56,.64,1);
+}
+.slider:before{
+  position:absolute;content:&quot;&quot;;height:20px;width:20px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;
+  box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  transition:.25s cubic-bezier(.34,1.56,.64,1);
+}
+.switch input:checked + .slider{
+  background:linear-gradient(135deg,#06b6d4,#7c3aed);
+}
+.switch input:checked + .slider:before{
+  transform:translateX(20px);
+}
+
+.est{
+  font-size:13px;
+  color:var(--fg);
+  font-weight:700;
+  background:linear-gradient(135deg,rgba(245,158,11,0.16),rgba(236,72,153,0.14));
+  padding:9px 13px;
+  border-radius:13px;
+  border:1.5px solid rgba(245,158,11,0.35);
+}
+.spec-wrap{background:var(--card-solid);border:1.5px solid var(--ln);border-radius:16px;padding:8px 10px}
+.spec-hdr{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--mut);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.spec-wrap canvas{width:100%;height:74px;display:block;border-radius:8px}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div class=&quot;aurora&quot; aria-hidden=&quot;true&quot;&gt;
+  &lt;div class=&quot;blob b1&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;blob b2&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;blob b3&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;canvas id=&quot;confetti&quot; aria-hidden=&quot;true&quot;&gt;&lt;/canvas&gt;
+
+&lt;main&gt;
+&lt;header&gt;
+  &lt;div class=&quot;brand&quot;&gt;
+    &lt;div class=&quot;logo&quot; aria-hidden=&quot;true&quot;&gt;
+      &lt;svg width=&quot;28&quot; height=&quot;28&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+        &lt;path d=&quot;M2 10v4&quot;/&gt;&lt;path d=&quot;M6 6v12&quot;/&gt;&lt;path d=&quot;M10 3v18&quot;/&gt;&lt;path d=&quot;M14 8v8&quot;/&gt;&lt;path d=&quot;M18 5v14&quot;/&gt;&lt;path d=&quot;M22 10v4&quot;/&gt;
+      &lt;/svg&gt;
+    &lt;/div&gt;
+    &lt;div&gt;
+      &lt;h1&gt;SoundDrop &lt;span class=&quot;badge&quot;&gt;Sonic Studio&lt;/span&gt;&lt;/h1&gt;
+      &lt;p class=&quot;s&quot;&gt;Colorful ultra-fast acoustic air-drop · OFDM + FSK + MFSK&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;button type=&quot;button&quot; class=&quot;theme-btn&quot; id=&quot;themeBtn&quot; title=&quot;Switch theme&quot;&gt;✨ Auto&lt;/button&gt;
+&lt;/header&gt;
+
+&lt;nav class=&quot;tabs&quot;&gt;
+  &lt;button type=&quot;button&quot; id=&quot;tS&quot; class=&quot;on&quot;&gt;🚀 Send&lt;/button&gt;
+  &lt;button type=&quot;button&quot; id=&quot;tR&quot;&gt;📡 Receive&lt;/button&gt;
+&lt;/nav&gt;
+
+&lt;!-- SENDER PANEL --&gt;
+&lt;section id=&quot;pS&quot; class=&quot;card&quot;&gt;
+  &lt;label class=&quot;drop&quot; id=&quot;drop&quot;&gt;
+    &lt;input type=&quot;file&quot; id=&quot;file&quot; hidden&gt;
+    &lt;span class=&quot;drop-icon&quot;&gt;🎁&lt;/span&gt;
+    &lt;b id=&quot;fn&quot;&gt;Tap to choose a file&lt;/b&gt;
+    &lt;small&gt;or drop one here · sends over pure sound waves!&lt;/small&gt;
+  &lt;/label&gt;
+  &lt;textarea id=&quot;txt&quot; placeholder=&quot;💬 …or type a secret message to beam across the room&quot;&gt;&lt;/textarea&gt;
+  &lt;input id=&quot;spass&quot; type=&quot;password&quot; placeholder=&quot;🔐 Passphrase (optional, AES-256 encrypts your payload)&quot;&gt;
+  
+  &lt;div&gt;
+    &lt;span class=&quot;sec-lbl&quot;&gt;🎛️ Modulation Mode &amp;amp; Speed&lt;/span&gt;
+    &lt;div class=&quot;chips&quot; id=&quot;chips&quot;&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;auto&quot; class=&quot;on&quot;&gt;✨ Auto (Smart)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;t&quot;&gt;🚀 OFDM Turbo (8ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;f&quot;&gt;⚡ OFDM Fast (14ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;b&quot;&gt;🎯 OFDM Balanced (26ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;fsk_f&quot;&gt;🌊 FSK Hyper (15ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;fsk_c&quot;&gt;📻 FSK Classic (32ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;.05&quot;&gt;🛡️ Robust (1-Tone · 50ms)&lt;/button&gt;
+      &lt;button type=&quot;button&quot; data-v=&quot;n&quot;&gt;🔇 Narrow (Noisy room)&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div id=&quot;sEst&quot; class=&quot;est&quot; hidden&gt;&lt;/div&gt;
+
+  &lt;label class=&quot;two&quot;&gt;🎚️ Resonant centre (Narrow mode)
+    &lt;select id=&quot;ctr&quot;&gt;
+      &lt;option value=&quot;s&quot; selected&gt;Sweep all four&lt;/option&gt;
+      &lt;option value=&quot;0&quot;&gt;2000 Hz&lt;/option&gt;
+      &lt;option value=&quot;1&quot;&gt;2600 Hz&lt;/option&gt;
+      &lt;option value=&quot;2&quot;&gt;3200 Hz&lt;/option&gt;
+      &lt;option value=&quot;3&quot;&gt;3800 Hz&lt;/option&gt;
+    &lt;/select&gt;
+  &lt;/label&gt;
+
+  &lt;!-- BROADCASTING MODE TOGGLE --&gt;
+  &lt;div class=&quot;bcast-box&quot; id=&quot;bcastBox&quot;&gt;
+    &lt;div class=&quot;bcast-info&quot;&gt;
+      &lt;span class=&quot;bcast-title&quot;&gt;📻 Broadcasting Mode &lt;span class=&quot;bcast-pill&quot;&gt;Group Send&lt;/span&gt;&lt;/span&gt;
+      &lt;span class=&quot;bcast-sub&quot;&gt;Keeps looping audio continuously even after receivers finish until you turn it off&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;label class=&quot;switch&quot; title=&quot;Toggle Broadcasting Mode&quot;&gt;
+      &lt;input type=&quot;checkbox&quot; id=&quot;bcast&quot;&gt;
+      &lt;span class=&quot;slider&quot;&gt;&lt;/span&gt;
+    &lt;/label&gt;
+  &lt;/div&gt;
+
+  &lt;label class=&quot;two&quot; id=&quot;twoRow&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;two&quot; checked&gt; 🤝 Two-way smart sync: auto-silences the instant receiver confirms&lt;/label&gt;
+
+  &lt;div class=&quot;radar&quot;&gt;
+    &lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;
+    &lt;div class=&quot;radar-core&quot;&gt;&lt;span&gt;🔊&lt;/span&gt;&lt;span class=&quot;eq&quot;&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;bar&quot;&gt;&lt;i id=&quot;sb&quot;&gt;&lt;/i&gt;&lt;/div&gt;
+  &lt;p id=&quot;sInfo&quot; class=&quot;st&quot;&gt;Pick a file or type a message, then tap Beam Sound. Audio auto-mutes the moment transfer finishes!&lt;/p&gt;
+  &lt;div class=&quot;row&quot;&gt;
+    &lt;button type=&quot;button&quot; class=&quot;go&quot; id=&quot;bS&quot;&gt;🔊 Beam Sound&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn-stop&quot; id=&quot;bX&quot; hidden&gt;⏹ Stop&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+
+&lt;!-- RECEIVER PANEL --&gt;
+&lt;section id=&quot;pR&quot; class=&quot;card&quot; hidden&gt;
+  &lt;div class=&quot;radar&quot;&gt;
+    &lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;
+    &lt;div class=&quot;radar-core&quot;&gt;&lt;span&gt;🎤&lt;/span&gt;&lt;span class=&quot;eq&quot;&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;b&gt;&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div&gt;
+    &lt;div style=&quot;display:flex;justify-content:space-between;margin-bottom:4px&quot;&gt;
+      &lt;small&gt;🎙️ Mic input level&lt;/small&gt;
+      &lt;small&gt;Auto-detects OFDM · FSK · MFSK&lt;/small&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;bar&quot;&gt;&lt;i id=&quot;lv&quot;&gt;&lt;/i&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;spec-wrap&quot;&gt;
+    &lt;div class=&quot;spec-hdr&quot;&gt;&lt;span&gt;🌈 Live Sonic Spectrum (0–8 kHz)&lt;/span&gt;&lt;span id=&quot;specTag&quot;&gt;Idle&lt;/span&gt;&lt;/div&gt;
+    &lt;canvas id=&quot;spec&quot;&gt;&lt;/canvas&gt;
+  &lt;/div&gt;
+  
+  &lt;div id=&quot;rEtaBox&quot; class=&quot;eta-box&quot; hidden&gt;
+    &lt;div&gt;&lt;span&gt;⏳ Time Left&lt;/span&gt;&lt;b id=&quot;rEta&quot;&gt;--&lt;/b&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;span&gt;⚡ Speed&lt;/span&gt;&lt;b id=&quot;rSpd&quot;&gt;--&lt;/b&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;span&gt;📦 Est. Size&lt;/span&gt;&lt;b id=&quot;rSz&quot;&gt;--&lt;/b&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;bar&quot;&gt;&lt;i id=&quot;pb&quot;&gt;&lt;/i&gt;&lt;/div&gt;
+  &lt;div class=&quot;tiles&quot; id=&quot;tiles&quot;&gt;&lt;/div&gt;
+  &lt;p id=&quot;rInfo&quot; class=&quot;st&quot;&gt;Tap Start Listening, allow the microphone, and place devices 15–50 cm apart.&lt;/p&gt;
+  &lt;input id=&quot;rpass&quot; type=&quot;password&quot; placeholder=&quot;🔑 Passphrase (if the sender set one)&quot;&gt;
+  &lt;button type=&quot;button&quot; id=&quot;bU&quot; class=&quot;go&quot; hidden&gt;🔓 Unlock File&lt;/button&gt;
+  &lt;div class=&quot;out&quot; id=&quot;out&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;row&quot;&gt;
+    &lt;button type=&quot;button&quot; class=&quot;go&quot; id=&quot;bL&quot;&gt;🎧 Start Listening&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn-stop&quot; id=&quot;bY&quot; hidden&gt;⏹ Stop&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn-test&quot; id=&quot;bTest&quot;&gt;🧪 Test Loopback&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+&lt;/main&gt;
+
+&lt;script&gt;
+// ================= DOM HELPER &amp; UTILITIES =================
+const $ = id =&gt; document.getElementById(id);
+const fmt = n =&gt; n &lt; 1024 ? n + &#x27; B&#x27; : n &lt; 1048576 ? (n / 1024).toFixed(1) + &#x27; KB&#x27; : (n / 1048576).toFixed(2) + &#x27; MB&#x27;;
+const fmtTime = s =&gt; {
+  if(!isFinite(s) || s &lt; 0) return &#x27;--&#x27;;
+  if(s &lt; 1) return s.toFixed(1) + &#x27;s&#x27;;
+  s = Math.ceil(s);
+  if(s &lt; 60) return s + &#x27;s&#x27;;
+  const m = Math.floor(s / 60), r = s % 60;
+  return `${m}m ${r}s`;
+};
+const MIC = { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } };
+
+// ================= THEME TOGGLE &amp; CELEBRATION CONFETTI =================
+(() =&gt; {
+  const root = document.documentElement;
+  const btn = $(&#x27;themeBtn&#x27;);
+  let mode = localStorage.getItem(&#x27;sd-theme&#x27;) || &#x27;auto&#x27;;
+  const applyTheme = m =&gt; {
+    mode = m;
+    if(m === &#x27;auto&#x27;){ root.removeAttribute(&#x27;data-theme&#x27;); btn.textContent = &#x27;✨ Auto&#x27;; }
+    else if(m === &#x27;dark&#x27;){ root.setAttribute(&#x27;data-theme&#x27;, &#x27;dark&#x27;); btn.textContent = &#x27;🌌 Neon&#x27;; }
+    else { root.setAttribute(&#x27;data-theme&#x27;, &#x27;light&#x27;); btn.textContent = &#x27;🍭 Candy&#x27;; }
+    try{ localStorage.setItem(&#x27;sd-theme&#x27;, m); }catch(e){}
+  };
+  applyTheme(mode);
+  btn.addEventListener(&#x27;click&#x27;, () =&gt; applyTheme(mode === &#x27;auto&#x27; ? &#x27;dark&#x27; : mode === &#x27;dark&#x27; ? &#x27;light&#x27; : &#x27;auto&#x27;));
+})();
+
+const confettiCanvas = $(&#x27;confetti&#x27;);
+const cctx = confettiCanvas.getContext(&#x27;2d&#x27;);
+let particles = [], confettiAnim = null;
+function burstConfetti(){
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  const colors = [&#x27;#7c3aed&#x27;, &#x27;#ec4899&#x27;, &#x27;#06b6d4&#x27;, &#x27;#10b981&#x27;, &#x27;#f59e0b&#x27;, &#x27;#f43f5e&#x27;];
+  for(let i = 0; i &lt; 80; i++){
+    particles.push({
+      x: confettiCanvas.width * (0.2 + Math.random() * 0.6),
+      y: confettiCanvas.height * 0.42,
+      vx: (Math.random() - 0.5) * 11,
+      vy: -4 - Math.random() * 9,
+      size: 5 + Math.random() * 6,
+      rot: Math.random() * Math.PI * 2,
+      vrot: (Math.random() - 0.5) * 0.25,
+      color: colors[i % colors.length],
+      life: 1
+    });
+  }
+  if(!confettiAnim){
+    const tick = () =&gt; {
+      cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      particles = particles.filter(p =&gt; p.life &gt; 0.02);
+      for(const p of particles){
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.28;
+        p.rot += p.vrot;
+        p.life -= 0.015;
+        cctx.save();
+        cctx.globalAlpha = Math.max(0, p.life);
+        cctx.translate(p.x, p.y);
+        cctx.rotate(p.rot);
+        cctx.fillStyle = p.color;
+        cctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+        cctx.restore();
+      }
+      if(particles.length) confettiAnim = requestAnimationFrame(tick);
+      else { cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height); confettiAnim = null; }
+    };
+    confettiAnim = requestAnimationFrame(tick);
+  }
+}
+
+// ================= MODULATION &amp; PROTOCOL CONSTANTS =================
+const PL1 = 12, AO = 7800, CENT = [2000, 2600, 3200, 3800];
+const WIDE1 = Array.from({length: 18}, (_, i) =&gt; i &lt; 16 ? 1500 + i * 360 : [1050, 1320][i - 16]);
+const nt = (c, sym) =&gt; {
+  const sp = 4.33 / sym;
+  return Array.from({length: 18}, (_, i) =&gt; i &lt; 16 ? c + (i - 7.5) * sp : c + (i === 16 ? -9.5 : 9.5) * sp);
+};
+
+const PL4 = 64;
+const BANDS4 = [0, 1, 2, 3].map(b =&gt; Array.from({length: 16}, (_, k) =&gt; 1400 + (b * 16 + k) * 110));
+const SYNC4_A = [1180, 3160, 4920, 6680];
+const SYNC4_B = [1290, 3270, 5030, 6790];
+
+const FSK_PRE = [2, 0, 2, 0, 2, 0, 2, 0];
+const FSK_CLASSIC_CFG = { sym: 0.032, f0: 1000, f1: 2000, fsy: 1500, label: &#x27;FSK Classic (32ms)&#x27; };
+const FSK_FAST_CFG    = { sym: 0.015, f0: 1200, f1: 2400, fsy: 1800, label: &#x27;FSK Hyper (15ms)&#x27; };
+const PL_FSK = 24;
+
+// ================= CRC, COMPRESSION, ENCRYPTION &amp; PACKETIZATION =================
+function crc16(bytes){
+  let c = 0xffff;
+  for(let k = 0; k &lt; bytes.length; k++){
+    c ^= bytes[k] &lt;&lt; 8;
+    for(let i = 0; i &lt; 8; i++) c = (c &amp; 0x8000) ? ((c &lt;&lt; 1) ^ 0x1021) &amp; 0xffff : (c &lt;&lt; 1) &amp; 0xffff;
+  }
+  return c;
+}
+const crc = crc16;
+
+const streamPipe = (b, T) =&gt; new Response(new Blob([b]).stream().pipeThrough(new T(&#x27;deflate&#x27;))).arrayBuffer();
+
+async function deriveAesKey(pass, salt){
+  const m = await crypto.subtle.importKey(&#x27;raw&#x27;, new TextEncoder().encode(pass), &#x27;PBKDF2&#x27;, false, [&#x27;deriveKey&#x27;]);
+  return crypto.subtle.deriveKey(
+    { name: &#x27;PBKDF2&#x27;, salt, iterations: 100000, hash: &#x27;SHA-256&#x27; },
+    m,
+    { name: &#x27;AES-GCM&#x27;, length: 256 },
+    false,
+    [&#x27;encrypt&#x27;, &#x27;decrypt&#x27;]
+  );
+}
+
+async function packPayload(name, data, pass){
+  const n = new TextEncoder().encode(name).slice(0, 200);
+  const raw = new Uint8Array(1 + n.length + data.length);
+  raw[0] = n.length;
+  raw.set(n, 1);
+  raw.set(data, 1 + n.length);
+  let out = raw, flags = 0;
+  try{
+    if(typeof CompressionStream !== &#x27;undefined&#x27;){
+      const c = new Uint8Array(await streamPipe(raw, CompressionStream));
+      if(c.length &lt; raw.length){ out = c; flags = 1; }
+    }
+  }catch(e){}
+  if(pass){
+    const sa = crypto.getRandomValues(new Uint8Array(8));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: &#x27;AES-GCM&#x27;, iv }, await deriveAesKey(pass, sa), out));
+    const enc = new Uint8Array(20 + ct.length);
+    enc.set(sa, 0);
+    enc.set(iv, 8);
+    enc.set(ct, 20);
+    out = enc;
+    flags |= 2;
+  }
+  const res = new Uint8Array(out.length + 5);
+  res[0] = flags;
+  new DataView(res.buffer).setUint32(1, out.length);
+  res.set(out, 5);
+  return res;
+}
+
+function mkPkt(fid, tot, idx, pl, plSize){
+  const b = new Uint8Array(plSize + 7);
+  b[0] = fid;
+  b[1] = idx &gt;&gt; 8; b[2] = idx &amp; 255;
+  b[3] = tot &gt;&gt; 8; b[4] = tot &amp; 255;
+  b.set(pl.subarray(0, plSize), 5);
+  const c = crc16(b.subarray(0, plSize + 5));
+  b[plSize + 5] = c &gt;&gt; 8;
+  b[plSize + 6] = c &amp; 255;
+  return b;
+}
+
+function makePackets(packed, plSize){
+  const fid = (Math.random() * 254 | 0) + 1;
+  const tot = Math.max(1, Math.ceil(packed.length / plSize));
+  return Array.from({length: tot}, (_, i) =&gt; mkPkt(fid, tot, i, packed.subarray(i * plSize, (i + 1) * plSize), plSize));
+}
+
+// ================= 3-TONE CONTINUOUS-PHASE FSK FRAMING &amp; SYNTHESIS =================
+function bitsFromBytes(bytes){
+  const bits = [];
+  for(let k = 0; k &lt; bytes.length; k++){
+    const v = bytes[k];
+    for(let i = 7; i &gt;= 0; i--) bits.push((v &gt;&gt; i) &amp; 1);
+  }
+  return bits;
+}
+
+function fskShortTextSymbols(text){
+  const bytes = [...text].map(c =&gt; c.charCodeAt(0) &amp; 255);
+  const body = [bytes.length, ...bytes];
+  const sum = crc16(body);
+  return [...FSK_PRE, ...bitsFromBytes([...body, (sum &gt;&gt; 8) &amp; 255, sum &amp; 255])];
+}
+
+function fskChunkSymbols(fid, seq, tot, chunk){
+  const clen = chunk.length;
+  const headerAndData = [0xA5, fid &amp; 255, (seq &gt;&gt; 8) &amp; 255, seq &amp; 255, (tot &gt;&gt; 8) &amp; 255, tot &amp; 255, clen, ...chunk];
+  const sum = crc16(headerAndData);
+  return [...FSK_PRE, ...bitsFromBytes([...headerAndData, (sum &gt;&gt; 8) &amp; 255, sum &amp; 255])];
+}
+
+function synthFSK(syms, sym, f0, f1, fsy, sr, amp = 0.88){
+  const N = Math.max(4, Math.round(sym * sr));
+  const sil = Math.round(0.055 * sr);
+  const bodyLen = N * syms.length;
+  const out = new Float32Array(sil * 2 + bodyLen);
+  let ph = 0;
+  for(let k = 0; k &lt; syms.length; k++){
+    const s = syms[k];
+    const freq = s === 2 ? fsy : (s ? f1 : f0);
+    const w = 2 * Math.PI * freq / sr;
+    const base = sil + k * N;
+    for(let i = 0; i &lt; N; i++){
+      out[base + i] = amp * Math.sin(ph);
+      ph += w;
+    }
+  }
+  const F = Math.min(Math.round(0.003 * sr), Math.floor(bodyLen / 4));
+  const a = sil, b = sil + bodyLen;
+  for(let i = 0; i &lt; F; i++){
+    const g = 0.5 - 0.5 * Math.cos(Math.PI * i / F);
+    out[a + i] *= g;
+    out[b - 1 - i] *= g;
+  }
+  return out;
+}
+
+// ================= UNIFIED AUDIO SYNTHESIS (OFDM, MFSK, AND 3-TONE CPFSK) =================
+function renderAudio(items, sr, amp = 0.88, leadSil = 0.03){
+  const fd = Math.round(sr * 0.0015);
+  let totalSamples = Math.round(sr * leadSil);
+  const plans = items.map(it =&gt; {
+    const s = Math.round(sr * it.sym);
+    if(it.fsk){
+      const wave = synthFSK(it.syms, it.sym, it.f0, it.f1, it.fsy, sr, amp);
+      totalSamples += wave.length;
+      return { wave, mode: &#x27;fsk&#x27; };
+    } else if(it.chords){
+      const syms = [SYNC4_A, SYNC4_B, SYNC4_A];
+      const padded = new Uint8Array(72);
+      padded.set(it.b);
+      for(let i = 0; i &lt; 72; i += 2){
+        const b0 = padded[i], b1 = padded[i + 1];
+        syms.push([BANDS4[0][b0 &gt;&gt; 4], BANDS4[1][b0 &amp; 15], BANDS4[2][b1 &gt;&gt; 4], BANDS4[3][b1 &amp; 15]]);
+      }
+      totalSamples += syms.length * s;
+      return { s, syms, mode: &#x27;ofdm&#x27; };
+    } else {
+      const sy = [16, 17, 16, 17, 16, 17];
+      for(let i = 0; i &lt; it.b.length; i++) sy.push(it.b[i] &gt;&gt; 4, it.b[i] &amp; 15);
+      totalSamples += sy.length * s;
+      return { s, sy, t: it.t, mode: &#x27;mfsk&#x27; };
+    }
+  });
+
+  const buf = new Float32Array(totalSamples);
+  let o = Math.round(sr * leadSil);
+  for(const p of plans){
+    if(p.mode === &#x27;fsk&#x27;){
+      buf.set(p.wave, o);
+      o += p.wave.length;
+    } else if(p.mode === &#x27;ofdm&#x27;){
+      const s = p.s, subAmp = amp * 0.245;
+      for(const chord of p.syms){
+        const w0 = chord[0] * 2 * Math.PI / sr;
+        const w1 = chord[1] * 2 * Math.PI / sr;
+        const w2 = chord[2] * 2 * Math.PI / sr;
+        const w3 = chord[3] * 2 * Math.PI / sr;
+        for(let i = 0; i &lt; s; i++){
+          let a = subAmp;
+          if(i &lt; fd) a *= i / fd;
+          else if(i &gt;= s - fd) a *= (s - i) / fd;
+          buf[o + i] = a * (Math.sin(w0 * i) + Math.sin(w1 * i) + Math.sin(w2 * i) + Math.sin(w3 * i));
+        }
+        o += s;
+      }
+    } else {
+      const s = p.s;
+      for(const k of p.sy){
+        const w = p.t[k] * 2 * Math.PI / sr;
+        for(let i = 0; i &lt; s; i++){
+          let a = amp;
+          if(i &lt; fd) a *= i / fd;
+          else if(i &gt;= s - fd) a *= (s - i) / fd;
+          buf[o + i] = a * Math.sin(w * i);
+        }
+        o += s;
+      }
+    }
+  }
+  return buf;
+}
+
+// ================= DECODER 1: ROBUST/NARROW 1-TONE MFSK DECODER =================
+class Dec1 {
+  constructor(sr, sym, on, t){
+    this.h = Math.round(sr * sym / 4);
+    this.W = this.h * 4;
+    this.on = on;
+    this.ring = new Float32Array(this.W);
+    this.pos = 0; this.n = 0; this.hist = []; this.cool = 0;
+    this.sym = sym;
+    this.modeName = `1-Tone MFSK (${Math.round(sym * 1000)}ms)`;
+    this.Wd = Math.round(this.W * 0.65);
+    this.hw = Float32Array.from({length: this.Wd}, (_, i) =&gt; 0.5 - 0.5 * Math.cos(2 * Math.PI * (i + 0.5) / this.Wd));
+    this.t = t;
+    this.co = t.map(f =&gt; 2 * Math.cos(2 * Math.PI * f / sr));
+  }
+  push(x){
+    for(let i = 0; i &lt; x.length; i++){
+      this.ring[this.pos] = x[i];
+      if(++this.pos === this.W) this.pos = 0;
+      if(++this.n % this.h === 0 &amp;&amp; this.n &gt;= this.W) this.hop();
+    }
+  }
+  hop(){
+    const W = this.W, r = this.ring, E = new Float32Array(18), Wd = this.Wd, hw = this.hw;
+    for(let k = 0; k &lt; 18; k++){
+      const c = this.co[k];
+      let a = 0, b = 0, j = (this.pos + W - Wd) % W;
+      for(let i = 0; i &lt; Wd; i++){
+        const s = r[j] * hw[i] + c * a - b;
+        b = a; a = s;
+        if(++j === W) j = 0;
+      }
+      E[k] = a * a + b * b - c * a * b;
+    }
+    const H = this.hist; H.push(E); if(H.length &gt; 380) H.shift();
+    if(this.cool &gt; 0){ this.cool--; return; }
+    const L = H.length; if(L &lt; 176) return;
+    const s = L - 176;
+    const am = k =&gt; {
+      const e = H[s + 4 * k + 3];
+      let m = 0;
+      for(let j = 1; j &lt; 18; j++) if(e[j] &gt; e[m]) m = j;
+      return m;
+    };
+    for(let k = 0; k &lt; 6; k++) if(am(k) !== 16 + k % 2) return;
+    const v = [], al = [];
+    for(let i = 0; i &lt; 38; i++){
+      const e = H[s + 4 * (6 + i) + 3];
+      let m = 0, m2 = -1;
+      for(let j = 1; j &lt; 18; j++) if(e[j] &gt; e[m]) m = j;
+      if(m &gt; 15) return;
+      for(let j = 0; j &lt; 16; j++) if(j !== m &amp;&amp; (m2 &lt; 0 || e[j] &gt; e[m2])) m2 = j;
+      v.push(m);
+      al.push([m2, e[m2] / (e[m] + 1e-9)]);
+    }
+    const by = a =&gt; {
+      const b = new Uint8Array(19);
+      for(let i = 0; i &lt; 38; i++) b[i &gt;&gt; 1] |= (i &amp; 1) ? a[i] : (a[i] &lt;&lt; 4);
+      return b;
+    };
+    const ok = b =&gt; crc16(b.subarray(0, 17)) === ((b[17] &lt;&lt; 8) | b[18]);
+    let B = by(v);
+    if(!ok(B)){
+      const o = [...v.keys()].sort((x, y) =&gt; al[y][1] - al[x][1]).slice(0, 7);
+      let f = null;
+      for(let x = 0; x &lt; 7 &amp;&amp; !f; x++){
+        const t = v.slice(); t[o[x]] = al[o[x]][0];
+        if(ok(by(t))) f = by(t);
+        for(let y = x + 1; y &lt; 7 &amp;&amp; !f; y++){
+          const u = t.slice(); u[o[y]] = al[o[y]][0];
+          if(ok(by(u))) f = by(u);
+        }
+      }
+      if(!f) return;
+      B = f;
+    }
+    this.cool = 170;
+    this.on(B, this.sym, this, PL1);
+  }
+}
+
+// ================= DECODER 2: HIGH-SPEED 4-TONE PARALLEL CHORD DECODER (OFDM) =================
+class Dec4 {
+  constructor(sr, sym, on){
+    this.sym = sym;
+    this.modeName = `4-Tone OFDM (${Math.round(sym * 1000)}ms)`;
+    this.h = Math.round(sr * sym / 3);
+    this.W = this.h * 3;
+    this.on = on;
+    this.ring = new Float32Array(this.W);
+    this.pos = 0; this.n = 0; this.hist = []; this.cool = 0;
+    this.Wd = Math.round(this.W * 0.85);
+    this.hw = Float32Array.from({length: this.Wd}, (_, i) =&gt; 0.5 - 0.5 * Math.cos(2 * Math.PI * (i + 0.5) / this.Wd));
+    this.freqs = [...BANDS4.flat(), ...SYNC4_A, ...SYNC4_B];
+    this.co = this.freqs.map(f =&gt; 2 * Math.cos(2 * Math.PI * f / sr));
+  }
+  push(x){
+    for(let i = 0; i &lt; x.length; i++){
+      this.ring[this.pos] = x[i];
+      if(++this.pos === this.W) this.pos = 0;
+      if(++this.n % this.h === 0 &amp;&amp; this.n &gt;= this.W) this.hop();
+    }
+  }
+  hop(){
+    const W = this.W, r = this.ring, E = new Float32Array(72), Wd = this.Wd, hw = this.hw;
+    for(let k = 0; k &lt; 72; k++){
+      const c = this.co[k];
+      let a = 0, b = 0, j = (this.pos + W - Wd) % W;
+      for(let i = 0; i &lt; Wd; i++){
+        const s = r[j] * hw[i] + c * a - b;
+        b = a; a = s;
+        if(++j === W) j = 0;
+      }
+      E[k] = a * a + b * b - c * a * b;
+    }
+    const H = this.hist; H.push(E); if(H.length &gt; 160) H.shift();
+    if(this.cool &gt; 0){ this.cool--; return; }
+    const L = H.length; if(L &lt; 117) return;
+    const s = L - 117;
+
+    for(let k = 0; k &lt; 3; k++){
+      const e = H[s + 3 * k + 2];
+      let syncE = 0, otherSyncE = 0;
+      const baseA = 64, baseB = 68;
+      for(let j = 0; j &lt; 4; j++){
+        if(k % 2 === 0){ syncE += e[baseA + j]; otherSyncE += e[baseB + j]; }
+        else { syncE += e[baseB + j]; otherSyncE += e[baseA + j]; }
+      }
+      if(syncE &lt;= otherSyncE * 1.35) return;
+      let maxData = 0;
+      for(let j = 0; j &lt; 16; j++) if(e[j] &gt; maxData) maxData = e[j];
+      if(syncE &lt; maxData * 1.4) return;
+    }
+
+    const nibs = new Uint8Array(144), alts = [];
+    for(let symIdx = 0; symIdx &lt; 36; symIdx++){
+      const e = H[s + 3 * (3 + symIdx) + 2];
+      for(let b = 0; b &lt; 4; b++){
+        const off = b * 16;
+        let m = 0, m2 = -1;
+        for(let j = 1; j &lt; 16; j++) if(e[off + j] &gt; e[off + m]) m = j;
+        for(let j = 0; j &lt; 16; j++) if(j !== m &amp;&amp; (m2 &lt; 0 || e[off + j] &gt; e[off + m2])) m2 = j;
+        const idx = symIdx * 4 + b;
+        nibs[idx] = m;
+        if(idx &lt; 142) alts.push([idx, m2, e[off + m2] / (e[off + m] + 1e-9)]);
+      }
+    }
+
+    const toBytes = nb =&gt; {
+      const out = new Uint8Array(71);
+      for(let i = 0; i &lt; 142; i++) out[i &gt;&gt; 1] |= (i &amp; 1) ? nb[i] : (nb[i] &lt;&lt; 4);
+      return out;
+    };
+    const ok = b =&gt; crc16(b.subarray(0, 69)) === ((b[69] &lt;&lt; 8) | b[70]);
+
+    let B = toBytes(nibs);
+    if(!ok(B)){
+      alts.sort((a, b) =&gt; b[2] - a[2]);
+      const top = alts.slice(0, 8);
+      let fixed = null;
+      for(let x = 0; x &lt; top.length &amp;&amp; !fixed; x++){
+        const t = nibs.slice(); t[top[x][0]] = top[x][1];
+        if(ok(toBytes(t))) fixed = toBytes(t);
+        for(let y = x + 1; y &lt; top.length &amp;&amp; !fixed; y++){
+          const u = t.slice(); u[top[y][0]] = top[y][1];
+          if(ok(toBytes(u))) fixed = toBytes(u);
+        }
+      }
+      if(!fixed) return;
+      B = fixed;
+    }
+
+    this.cool = 110;
+    this.on(B, this.sym, this, PL4);
+  }
+}
+
+// ================= DECODER 3: 3-TONE CONTINUOUS-PHASE FSK SLIDING-WINDOW DECODER =================
+function gzWindow(x, s, n, f, sr){
+  const c = 2 * Math.cos(2 * Math.PI * f / sr);
+  let a = 0, b = 0;
+  const end = Math.min(x.length, s + n);
+  for(let i = s; i &lt; end; i++){
+    const t = x[i] + c * a - b;
+    b = a; a = t;
+  }
+  return a * a + b * b - c * a * b;
+}
+
+function fskTones(x, s, N, cfg, sr){
+  const m = Math.round(N * 0.15);
+  const n = Math.max(4, Math.round(N * 0.70));
+  return [
+    gzWindow(x, s + m, n, cfg.f0, sr),
+    gzWindow(x, s + m, n, cfg.f1, sr),
+    gzWindow(x, s + m, n, cfg.fsy, sr)
+  ];
+}
+
+function fskPreScore(x, s, N, cfg, sr){
+  let sc = 0;
+  for(let k = 0; k &lt; 8; k++){
+    const p = fskTones(x, s + k * N, N, cfg, sr);
+    sc += p[FSK_PRE[k]] / (p[0] + p[1] + p[2] + 1e-12);
+    if(k &gt;= 2 &amp;&amp; sc &lt; 0.45 * (k + 1)) return 0;
+  }
+  return sc;
+}
+
+function bitsToBytes(bits){
+  const len = bits.length &gt;&gt; 3;
+  const out = new Uint8Array(len);
+  for(let i = 0; i &lt; len; i++){
+    let v = 0;
+    for(let b = 0; b &lt; 8; b++) v = (v &lt;&lt; 1) | bits[i * 8 + b];
+    out[i] = v;
+  }
+  return out;
+}
+
+function readFskBits(x, startPos, count, N, cfg, sr){
+  const bits = new Uint8Array(count);
+  for(let k = 0; k &lt; count; k++){
+    const p = fskTones(x, startPos + k * N, N, cfg, sr);
+    bits[k] = p[1] &gt; p[0] ? 1 : 0;
+  }
+  return bits;
+}
+
+function decodeFSKAt(x, pos, N, cfg, sr){
+  if(pos + 16 * N &gt; x.length) return null;
+  const lenBytes = bitsToBytes(readFskBits(x, pos + 8 * N, 8, N, cfg, sr));
+  const n = lenBytes[0];
+
+  if(n === 0xA5){
+    if(pos + 72 * N &gt; x.length) return null;
+    const hdrBytes = bitsToBytes(readFskBits(x, pos + 16 * N, 48, N, cfg, sr));
+    const fid = hdrBytes[0];
+    const seq = (hdrBytes[1] &lt;&lt; 8) | hdrBytes[2];
+    const tot = (hdrBytes[3] &lt;&lt; 8) | hdrBytes[4];
+    const clen = hdrBytes[5];
+    if(!tot || tot &gt; 4000 || seq &gt;= tot || clen &lt; 1 || clen &gt; PL_FSK) return null;
+
+    const totalFrameSyms = 16 + 48 + (clen + 2) * 8;
+    if(pos + totalFrameSyms * N &gt; x.length) return null;
+    const tailBytes = bitsToBytes(readFskBits(x, pos + 64 * N, (clen + 2) * 8, N, cfg, sr));
+    const chunk = tailBytes.subarray(0, clen);
+    const recvCrc = (tailBytes[clen] &lt;&lt; 8) | tailBytes[clen + 1];
+    const calcCrc = crc16([0xA5, ...hdrBytes, ...chunk]);
+    if(recvCrc !== calcCrc) return null;
+
+    return { kind: &#x27;pkt&#x27;, fid, seq, tot, data: new Uint8Array(chunk) };
+  }
+
+  if(n &gt;= 1 &amp;&amp; n &lt;= 17){
+    const totalFrameSyms = 32 + 8 * n;
+    if(pos + totalFrameSyms * N &gt; x.length) return null;
+    const bodyAndCrc = bitsToBytes(readFskBits(x, pos + 16 * N, (n + 2) * 8, N, cfg, sr));
+    const msgBytes = bodyAndCrc.subarray(0, n);
+    const recvCrc = (bodyAndCrc[n] &lt;&lt; 8) | bodyAndCrc[n + 1];
+    const calcCrc = crc16([n, ...msgBytes]);
+    if(recvCrc !== calcCrc) return null;
+
+    return { kind: &#x27;text&#x27;, text: String.fromCharCode(...msgBytes) };
+  }
+
+  return null;
+}
+
+function findFSKFrame(x, sr, cfg){
+  const N = Math.round(cfg.sym * sr);
+  const st = Math.max(1, Math.round(N / 8));
+  const L = x.length - 16 * N;
+  if(L &lt;= 0) return [];
+
+  const S = [];
+  for(let s = 0; s &lt;= L; s += st) S.push(fskPreScore(x, s, N, cfg, sr));
+
+  const found = [];
+  for(let t = 0; t &lt; 16; t++){
+    let bi = -1, bv = 0;
+    for(let i = 0; i &lt; S.length; i++){
+      if(S[i] &gt; bv){ bv = S[i]; bi = i; }
+    }
+    if(bi &lt; 0 || bv &lt; 4.6) break;
+    let lo = bi, hi = bi;
+    while(lo &gt; 0 &amp;&amp; S[lo - 1] &gt;= bv - 0.15) lo--;
+    while(hi &lt; S.length - 1 &amp;&amp; S[hi + 1] &gt;= bv - 0.15) hi++;
+    const decoded = decodeFSKAt(x, Math.round((lo + hi) / 2) * st, N, cfg, sr);
+    if(decoded) found.push(decoded);
+    for(let i = Math.max(0, bi - 24); i &lt;= Math.min(S.length - 1, bi + 24); i++) S[i] = 0;
+  }
+  return found;
+}
+
+class DecFSK {
+  constructor(sr, cfg, onFrame){
+    this.sr = sr;
+    this.cfg = cfg;
+    this.sym = cfg.sym;
+    this.modeName = cfg.label;
+    this.onFrame = onFrame;
+    this.cap = Math.round(sr * 12);
+    this.ring = new Float32Array(this.cap);
+    this.wp = 0;
+    this.filled = 0;
+    this.sinceScan = 0;
+    this.scanStep = Math.round(sr * 0.25);
+  }
+  push(chunk){
+    const len = this.cap;
+    for(let i = 0; i &lt; chunk.length; i++){
+      this.ring[this.wp] = chunk[i];
+      this.wp = (this.wp + 1) % len;
+    }
+    this.filled = Math.min(len, this.filled + chunk.length);
+    this.sinceScan += chunk.length;
+    if(this.sinceScan &gt;= this.scanStep){
+      this.sinceScan = 0;
+      this.scanRecent();
+    }
+  }
+  getRecent(maxSec = 4.5){
+    const want = Math.min(this.filled, Math.round(this.sr * maxSec));
+    if(want &lt;= 0) return new Float32Array(0);
+    const out = new Float32Array(want);
+    const start = (this.wp - want + this.cap) % this.cap;
+    if(start + want &lt;= this.cap){
+      out.set(this.ring.subarray(start, start + want));
+    } else {
+      const first = this.cap - start;
+      out.set(this.ring.subarray(start, this.cap), 0);
+      out.set(this.ring.subarray(0, want - first), first);
+    }
+    return out;
+  }
+  scanRecent(){
+    const seg = this.getRecent(4.5);
+    if(seg.length &lt; Math.round(this.cfg.sym * this.sr * 16)) return [];
+    const frames = findFSKFrame(seg, this.sr, this.cfg);
+    if(frames.length &amp;&amp; this.onFrame){
+      for(const f of frames) this.onFrame(f, this);
+    }
+    return frames;
+  }
+}
+
+const wake = () =&gt; { try{ navigator.wakeLock &amp;&amp; navigator.wakeLock.request(&#x27;screen&#x27;).catch(() =&gt; {}); }catch(e){} };
+
+// ================= SENDER LOGIC (ZERO-DELAY STREAMING + BROADCASTING MODE) =================
+let sc = null, sOutGain = null, sActiveSources = [], sm = null, sfid = 0, mv = &#x27;auto&#x27;;
+let sPackets4 = [], sPackets1 = [], sStreamTimer = null, sStopTimeout = null, sIsStopping = false;
+let sConfirmedCount = 0;
+
+function syncBroadcastUI(){
+  const isBcast = $(&#x27;bcast&#x27;).checked;
+  $(&#x27;bcastBox&#x27;).classList.toggle(&#x27;on&#x27;, isBcast);
+  $(&#x27;twoRow&#x27;).style.opacity = isBcast ? &#x27;0.5&#x27; : &#x27;1&#x27;;
+  $(&#x27;two&#x27;).disabled = isBcast;
+  const bS = $(&#x27;bS&#x27;);
+  if(isBcast){
+    bS.textContent = &#x27;📻 Start Broadcasting&#x27;;
+    bS.classList.add(&#x27;bcast-active&#x27;);
+    if(!sc){
+      $(&#x27;sInfo&#x27;).textContent = &#x27;Broadcasting Mode ON: audio loops continuously for everyone in the room until you tap Stop Broadcasting.&#x27;;
+    }
+  } else {
+    bS.textContent = &#x27;🔊 Beam Sound&#x27;;
+    bS.classList.remove(&#x27;bcast-active&#x27;);
+    if(!sc){
+      $(&#x27;sInfo&#x27;).textContent = &#x27;Pick a file or type a message, then tap Beam Sound. Audio auto-mutes the moment transfer finishes!&#x27;;
+    }
+  }
+}
+$(&#x27;bcast&#x27;).addEventListener(&#x27;change&#x27;, syncBroadcastUI);
+
+function updateEstimate(){
+  const f = $(&#x27;file&#x27;).files[0], txt = $(&#x27;txt&#x27;).value;
+  const est = $(&#x27;sEst&#x27;);
+  const rawBytes = f ? f.size : (txt ? new TextEncoder().encode(txt).length : 0);
+  if(!rawBytes){ est.hidden = true; return; }
+  const approxPacked = Math.max(20, Math.round(rawBytes * 0.65) + 25);
+  const pkts4 = Math.ceil(approxPacked / PL4);
+  const pktsFSK = Math.ceil(approxPacked / PL_FSK);
+  const pkts1 = Math.ceil(approxPacked / PL1);
+  const isShort = !f &amp;&amp; !$(&#x27;spass&#x27;).value &amp;&amp; txt.length &gt;= 1 &amp;&amp; txt.length &lt;= 17 &amp;&amp; [...txt].every(c =&gt; c.charCodeAt(0) &lt; 256);
+
+  const symMap = {
+    auto:  { t: pkts4 * 39 * 0.008, label: &#x27;Auto (starts at OFDM Turbo 8ms)&#x27; },
+    t:     { t: pkts4 * 39 * 0.008, label: &#x27;Turbo 4-Tone OFDM (8ms)&#x27; },
+    f:     { t: pkts4 * 39 * 0.014, label: &#x27;Fast 4-Tone OFDM (14ms)&#x27; },
+    b:     { t: pkts4 * 39 * 0.026, label: &#x27;Balanced 4-Tone OFDM (26ms)&#x27; },
+    fsk_f: { t: isShort ? (32 + 8 * txt.length) * 0.015 : pktsFSK * 272 * 0.015, label: &#x27;FSK Hyper (3-Tone · 15ms)&#x27; },
+    fsk_c: { t: isShort ? (32 + 8 * txt.length) * 0.032 : pktsFSK * 272 * 0.032, label: &#x27;FSK Classic (3-Tone · 32ms)&#x27; },
+    &#x27;.05&#x27;: { t: pkts1 * 44 * 0.050, label: &#x27;Robust 1-Tone MFSK (50ms)&#x27; },
+    n:     { t: pkts1 * 44 * 0.300, label: &#x27;Narrow 1-Tone MFSK (300ms)&#x27; }
+  };
+  const m = symMap[mv] || symMap.auto;
+  const spd = Math.round(rawBytes / Math.max(0.15, m.t));
+  est.hidden = false;
+  est.textContent = `⚡ Est. loop time: ~${fmtTime(m.t)} (${fmt(spd)}/s) in ${m.label}`;
+}
+
+function selectModeChip(btn){
+  if(!btn || !btn.dataset.v) return;
+  document.querySelectorAll(&#x27;#chips button&#x27;).forEach(x =&gt; x.classList.remove(&#x27;on&#x27;));
+  btn.classList.add(&#x27;on&#x27;);
+  mv = btn.dataset.v;
+  updateEstimate();
+}
+$(&#x27;chips&#x27;).addEventListener(&#x27;click&#x27;, e =&gt; {
+  const btn = e.target.closest(&#x27;button[data-v]&#x27;);
+  if(btn) selectModeChip(btn);
+});
+
+const pickFile = () =&gt; {
+  const f = $(&#x27;file&#x27;).files[0];
+  $(&#x27;fn&#x27;).textContent = f ? `${f.name} · ${fmt(f.size)}` : &#x27;Tap to choose a file&#x27;;
+  updateEstimate();
+};
+$(&#x27;file&#x27;).addEventListener(&#x27;change&#x27;, pickFile);
+$(&#x27;txt&#x27;).addEventListener(&#x27;input&#x27;, updateEstimate);
+$(&#x27;spass&#x27;).addEventListener(&#x27;input&#x27;, updateEstimate);
+[&#x27;dragover&#x27;, &#x27;drop&#x27;].forEach(ev =&gt; $(&#x27;drop&#x27;).addEventListener(ev, e =&gt; {
+  e.preventDefault();
+  if(ev === &#x27;drop&#x27; &amp;&amp; e.dataTransfer &amp;&amp; e.dataTransfer.files.length){
+    $(&#x27;file&#x27;).files = e.dataTransfer.files;
+    pickFile();
+  }
+}));
+
+function hardSilenceSender(msg){
+  if(sIsStopping &amp;&amp; !msg) return;
+  sIsStopping = true;
+  try{
+    if(sStreamTimer){ clearInterval(sStreamTimer); sStreamTimer = null; }
+    if(sStopTimeout){ clearTimeout(sStopTimeout); sStopTimeout = null; }
+    if(sOutGain &amp;&amp; sc){
+      try{
+        sOutGain.gain.cancelScheduledValues(sc.currentTime);
+        sOutGain.gain.setValueAtTime(0, sc.currentTime);
+      }catch(e){}
+      sOutGain.gain.value = 0;
+      try{ sOutGain.disconnect(); }catch(e){}
+    }
+    for(const node of sActiveSources){
+      try{ node.onended = null; node.stop(0); node.disconnect(); }catch(e){}
+    }
+    sActiveSources = [];
+    if(sm){ sm.getTracks().forEach(t =&gt; { try{ t.stop(); }catch(e){} }); sm = null; }
+    if(sc){ const oldSc = sc; sc = null; oldSc.close().catch(() =&gt; {}); }
+  }catch(e){}
+  sOutGain = null;
+  $(&#x27;bX&#x27;).hidden = true;
+  $(&#x27;bX&#x27;).textContent = &#x27;⏹ Stop&#x27;;
+  $(&#x27;bS&#x27;).hidden = false;
+  $(&#x27;bcast&#x27;).disabled = false;
+  syncBroadcastUI();
+  $(&#x27;pS&#x27;).classList.remove(&#x27;live&#x27;);
+  if(msg){
+    $(&#x27;sInfo&#x27;).textContent = msg;
+    if(msg.includes(&#x27;✓&#x27;)) burstConfetti();
+  }
+}
+
+function onAck(b){
+  if(b[0] !== sfid) return;
+  const g = (b[1] &lt;&lt; 8) | b[2], t = (b[3] &lt;&lt; 8) | b[4], flags = b[5], firstMiss = (b[6] &lt;&lt; 8) | b[7];
+  const isBroadcasting = $(&#x27;bcast&#x27;).checked;
+
+  // In Broadcasting Mode, ignore receiver completion/progress ACKs so the broadcast keeps running for everyone else
+  if(isBroadcasting){
+    if(flags &amp; 1){
+      sConfirmedCount++;
+      $(&#x27;sInfo&#x27;).textContent = `📻 Broadcasting live (${sConfirmedCount} confirmation ping(s) heard) — keeping audio active for other receivers until you turn it off…`;
+    }
+    return;
+  }
+
+  $(&#x27;sb&#x27;).style.width = Math.min(100, Math.round(100 * g / Math.max(1, t))) + &#x27;%&#x27;;
+  if(flags &amp; 1){
+    $(&#x27;sb&#x27;).style.width = &#x27;100%&#x27;;
+    hardSilenceSender(&#x27;Delivered ✓ Receiver confirmed the full transfer — audio silenced!&#x27;);
+  } else {
+    $(&#x27;sInfo&#x27;).textContent = `Receiver got ${g}/${t} packets (${Math.round(100 * g / t)}%) · next missing #${firstMiss}…`;
+  }
+}
+
+$(&#x27;bS&#x27;).addEventListener(&#x27;click&#x27;, async () =&gt; {
+  hardSilenceSender();
+  sIsStopping = false;
+  sConfirmedCount = 0;
+
+  let name, data;
+  const f = $(&#x27;file&#x27;).files[0], t = $(&#x27;txt&#x27;).value, pass = $(&#x27;spass&#x27;).value;
+  if(f){ name = f.name; data = new Uint8Array(await f.arrayBuffer()); }
+  else if(t){ name = &#x27;message.txt&#x27;; data = new TextEncoder().encode(t); }
+  else { $(&#x27;sInfo&#x27;).textContent = &#x27;Choose a file or type a message first.&#x27;; return; }
+
+  const isBroadcasting = $(&#x27;bcast&#x27;).checked;
+  $(&#x27;sInfo&#x27;).textContent = isBroadcasting ? &#x27;Starting continuous sonic broadcast…&#x27; : &#x27;Preparing high-speed sonic stream…&#x27;;
+  const isShortCompat = !f &amp;&amp; !pass &amp;&amp; t.length &gt;= 1 &amp;&amp; t.length &lt;= 17 &amp;&amp; [...t].every(c =&gt; c.charCodeAt(0) &lt; 256);
+  const packed = await packPayload(name, data, pass);
+  sPackets4 = makePackets(packed, PL4);
+  sPackets1 = makePackets(packed, PL1);
+
+  const fid = sPackets4[0][0];
+  sPackets1.forEach(p =&gt; {
+    p[0] = fid;
+    const c = crc16(p.subarray(0, 17));
+    p[17] = c &gt;&gt; 8; p[18] = c &amp; 255;
+  });
+  sfid = fid;
+  $(&#x27;sb&#x27;).style.width = &#x27;0%&#x27;;
+
+  const buildFSKItems = cfg =&gt; {
+    if(isShortCompat){
+      return [{ syms: fskShortTextSymbols(t), sym: cfg.sym, f0: cfg.f0, f1: cfg.f1, fsy: cfg.fsy, fsk: true }];
+    }
+    const totChunks = Math.ceil(packed.length / PL_FSK);
+    const out = [];
+    for(let i = 0; i &lt; totChunks; i++){
+      const chunk = packed.subarray(i * PL_FSK, Math.min(packed.length, (i + 1) * PL_FSK));
+      out.push({ syms: fskChunkSymbols(fid, i, totChunks, chunk), sym: cfg.sym, f0: cfg.f0, f1: cfg.f1, fsy: cfg.fsy, fsk: true });
+    }
+    return out;
+  };
+
+  const cs = $(&#x27;ctr&#x27;).value === &#x27;s&#x27; ? CENT : [CENT[+$(&#x27;ctr&#x27;).value]];
+  const buildPass = mode =&gt; {
+    if(mode === &#x27;t&#x27;) return sPackets4.map(b =&gt; ({ b, sym: 0.008, chords: true }));
+    if(mode === &#x27;f&#x27;) return sPackets4.map(b =&gt; ({ b, sym: 0.014, chords: true }));
+    if(mode === &#x27;b&#x27;) return sPackets4.map(b =&gt; ({ b, sym: 0.026, chords: true }));
+    if(mode === &#x27;fsk_f&#x27;) return buildFSKItems(FSK_FAST_CFG);
+    if(mode === &#x27;fsk_c&#x27;) return buildFSKItems(FSK_CLASSIC_CFG);
+    if(mode === &#x27;.05&#x27;) return sPackets1.map(b =&gt; ({ b, sym: 0.05, t: WIDE1 }));
+    if(mode === &#x27;n&#x27;) return cs.flatMap(c =&gt; sPackets1.map(b =&gt; ({ b, sym: 0.3, t: nt(c, 0.3) })));
+    return [];
+  };
+
+  const sequence = mv === &#x27;auto&#x27; ? [&#x27;t&#x27;, &#x27;f&#x27;, &#x27;b&#x27;, &#x27;.05&#x27;] : [mv];
+  const items = sequence.flatMap(buildPass);
+
+  sc = new (window.AudioContext || window.webkitAudioContext)();
+  if(sc.state === &#x27;suspended&#x27;) await sc.resume();
+
+  sOutGain = sc.createGain();
+  sOutGain.gain.value = 1.0;
+  sOutGain.connect(sc.destination);
+
+  // Only open two-way ACK listener when NOT in Broadcasting Mode
+  let two = false;
+  if(!isBroadcasting &amp;&amp; $(&#x27;two&#x27;).checked &amp;&amp; !(isShortCompat &amp;&amp; (mv === &#x27;fsk_c&#x27; || mv === &#x27;fsk_f&#x27;))){
+    try{
+      sm = await navigator.mediaDevices.getUserMedia(MIC);
+      const s = sc.createMediaStreamSource(sm);
+      const sp = sc.createScriptProcessor(4096, 1, 1);
+      const mute = sc.createGain();
+      mute.gain.value = 0;
+      const ds = [
+        new Dec1(sc.sampleRate, 0.04, onAck, WIDE1.map(f =&gt; f + AO)),
+        new Dec1(sc.sampleRate, 0.25, onAck, nt(4600, 0.25))
+      ];
+      sp.onaudioprocess = e =&gt; {
+        const x = e.inputBuffer.getChannelData(0);
+        ds.forEach(d =&gt; d.push(x));
+      };
+      s.connect(sp); sp.connect(mute); mute.connect(sc.destination);
+      two = true;
+    }catch(e){}
+  }
+
+  // Zero-delay streaming scheduler:
+  // - In Broadcasting Mode: maxPasses = Infinity (never stops on ACKs or pass limits; runs until manually stopped)
+  // - In Normal Mode: stops immediately on ACK (two-way) or after 2 passes (one-way)
+  const BATCH_SIZE = items[0] &amp;&amp; items[0].fsk ? 4 : 16;
+  let itemCursor = 0;
+  let nextPlayTime = sc.currentTime + 0.02;
+  let passCount = 0;
+  const maxPasses = (isBroadcasting || two) ? Infinity : 2;
+
+  const scheduleAhead = () =&gt; {
+    if(!sc || sIsStopping || !sOutGain) return;
+    while(nextPlayTime &lt; sc.currentTime + 0.65){
+      if(itemCursor &gt;= items.length){
+        passCount++;
+        if(passCount &gt;= maxPasses){
+          const remMs = Math.max(0, (nextPlayTime - sc.currentTime) * 1000) + 40;
+          if(!sStopTimeout){
+            sStopTimeout = setTimeout(() =&gt; {
+              $(&#x27;sb&#x27;).style.width = &#x27;100%&#x27;;
+              hardSilenceSender(&#x27;Transfer finished ✓ Audio silenced.&#x27;);
+            }, remMs);
+          }
+          return;
+        }
+        itemCursor = 0;
+      }
+      const slice = items.slice(itemCursor, itemCursor + BATCH_SIZE);
+      const isFirstChunk = (passCount === 0 &amp;&amp; itemCursor === 0);
+      itemCursor += slice.length;
+
+      const buf = renderAudio(slice, sc.sampleRate, 0.88, isFirstChunk ? 0.03 : 0.005);
+      const ab = sc.createBuffer(1, buf.length, sc.sampleRate);
+      ab.copyToChannel(buf, 0);
+      const node = sc.createBufferSource();
+      node.buffer = ab;
+      node.connect(sOutGain);
+      const startAt = Math.max(sc.currentTime + 0.005, nextPlayTime);
+      node.start(startAt);
+      nextPlayTime = startAt + ab.duration;
+      sActiveSources.push(node);
+      node.onended = () =&gt; {
+        const idx = sActiveSources.indexOf(node);
+        if(idx &gt;= 0) sActiveSources.splice(idx, 1);
+      };
+
+      if(isBroadcasting){
+        const loopPct = Math.max(4, Math.round(100 * (itemCursor / items.length)));
+        $(&#x27;sb&#x27;).style.width = loopPct + &#x27;%&#x27;;
+        $(&#x27;sInfo&#x27;).textContent = `📻 Broadcasting live · Loop #${passCount + 1} (${loopPct}%) — keeps playing for everyone until you turn it off.`;
+      } else if(!two){
+        const pct = Math.min(99, Math.round(100 * ((passCount * items.length + itemCursor) / (items.length * maxPasses))));
+        $(&#x27;sb&#x27;).style.width = pct + &#x27;%&#x27;;
+      }
+    }
+  };
+
+  scheduleAhead();
+  sStreamTimer = setInterval(scheduleAhead, 120);
+  wake();
+
+  $(&#x27;bS&#x27;).hidden = true;
+  $(&#x27;bX&#x27;).hidden = false;
+  $(&#x27;bX&#x27;).textContent = isBroadcasting ? &#x27;⏹ Stop Broadcasting&#x27; : &#x27;⏹ Stop&#x27;;
+  $(&#x27;bcast&#x27;).disabled = true;
+  $(&#x27;pS&#x27;).classList.add(&#x27;live&#x27;);
+
+  const firstPassItems = buildPass(sequence[0]);
+  const symsPer = firstPassItems[0].fsk ? firstPassItems[0].syms.length : (firstPassItems[0].chords ? 39 : 44);
+  const passSec = Math.max(0.2, firstPassItems.length * symsPer * firstPassItems[0].sym);
+
+  if(isBroadcasting){
+    $(&#x27;sInfo&#x27;).textContent = `📻 Broadcasting live (~${fmtTime(passSec)} per loop) — keeps playing even after receivers complete until you tap Stop Broadcasting.`;
+  } else {
+    $(&#x27;sInfo&#x27;).textContent = `Streaming ${firstPassItems.length} frame(s) (~${fmtTime(passSec)} per pass). ` + (two ? &#x27;Will auto-silence upon confirmation…&#x27; : &#x27;One-way mode (auto-silences after 2 passes).&#x27;);
+  }
+});
+
+$(&#x27;bX&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+  const wasBcast = $(&#x27;bcast&#x27;).checked;
+  hardSilenceSender(wasBcast ? &#x27;Broadcast stopped &amp; silenced.&#x27; : &#x27;Stopped &amp; silenced.&#x27;);
+});
+
+// ================= RECEIVER LOGIC =================
+let rc = null, ms = null, an = null, st = null, decs = [], fskDecs = [];
+let ackBusy = false, lastAck = 0, rTimer = null, fskSeqMap = new Map(), lastFskText = &#x27;&#x27;;
+
+function drawSpectrum(){
+  const cv = $(&#x27;spec&#x27;);
+  if(!cv) return;
+  const g = cv.getContext(&#x27;2d&#x27;);
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth || 300, h = cv.clientHeight || 74;
+  if(cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)){
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+
+  if(rc &amp;&amp; an){
+    const bins = new Uint8Array(an.frequencyBinCount);
+    an.getByteFrequencyData(bins);
+    const maxBin = Math.min(bins.length - 1, Math.floor(8200 / (rc.sampleRate / an.fftSize)));
+    const grad = g.createLinearGradient(0, 0, w, 0);
+    grad.addColorStop(0, &#x27;#06b6d4&#x27;);
+    grad.addColorStop(0.45, &#x27;#8b5cf6&#x27;);
+    grad.addColorStop(0.75, &#x27;#ec4899&#x27;);
+    grad.addColorStop(1, &#x27;#f59e0b&#x27;);
+    g.fillStyle = grad;
+    const barCount = 56;
+    const step = Math.max(1, Math.floor(maxBin / barCount));
+    const bw = (w / barCount) - 2;
+    for(let i = 0; i &lt; barCount; i++){
+      let sum = 0;
+      for(let j = 0; j &lt; step; j++) sum += bins[i * step + j] || 0;
+      const v = (sum / step) / 255;
+      const bh = Math.max(3, v * (h - 6));
+      const x = i * (w / barCount);
+      g.beginPath();
+      if(g.roundRect) g.roundRect(x, h - bh, Math.max(2, bw), bh, 3);
+      else g.rect(x, h - bh, Math.max(2, bw), bh);
+      g.fill();
+    }
+  } else {
+    g.strokeStyle = &#x27;rgba(139,92,246,0.28)&#x27;;
+    g.lineWidth = 2;
+    g.beginPath();
+    for(let x = 0; x &lt;= w; x += 6){
+      const y = h / 2 + Math.sin(x * 0.05 + Date.now() * 0.004) * 6;
+      if(x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+  requestAnimationFrame(drawSpectrum);
+}
+drawSpectrum();
+
+function renderDecodedOutput(name, data, modeLabel, elapsedSec){
+  const url = URL.createObjectURL(new Blob([data]));
+  const o = $(&#x27;out&#x27;); o.innerHTML = &#x27;&#x27;;
+  const a2 = document.createElement(&#x27;a&#x27;);
+  a2.href = url; a2.download = name;
+  a2.textContent = `🎉 Download ${name} (${fmt(data.length)})`;
+  o.append(a2);
+  if(/\.txt$/i.test(name)){
+    const p = document.createElement(&#x27;pre&#x27;);
+    p.style.whiteSpace = &#x27;pre-wrap&#x27;;
+    p.textContent = new TextDecoder().decode(data).slice(0, 2500);
+    o.append(p);
+  }
+  $(&#x27;rInfo&#x27;).textContent = `Done ✓ Received ${fmt(data.length)} via ${modeLabel} in ${elapsedSec}s!`;
+  burstConfetti();
+}
+
+function sendAck(done){
+  if(!rc || ackBusy || !st) return;
+  const g = st.got.size;
+  let firstMiss = st.tot;
+  for(let i = 0; i &lt; st.tot; i++){ if(!st.got.has(i)){ firstMiss = i; break; } }
+  const pl = new Uint8Array([done ? 1 : 0, firstMiss &gt;&gt; 8, firstMiss &amp; 255]);
+  const b = mkPkt(st.fid, st.tot, g, pl, PL1);
+  const nr = st.lastD &amp;&amp; st.lastD.sym &gt;= 0.25;
+  const x = renderAudio([nr ? { b, sym: 0.25, t: nt(4600, 0.25) } : { b, sym: 0.04, t: WIDE1.map(f =&gt; f + AO) }], rc.sampleRate, 0.75, 0.01);
+  const ab = rc.createBuffer(1, x.length, rc.sampleRate);
+  ab.copyToChannel(x, 0);
+  const s = rc.createBufferSource();
+  s.buffer = ab; s.connect(rc.destination);
+  ackBusy = true;
+  s.onended = () =&gt; { ackBusy = false; try{ s.disconnect(); }catch(e){} };
+  s.start();
+  lastAck = Date.now();
+}
+
+function updateReceiverTelemetry(){
+  if(!st || st.done) return;
+  const g = st.got.size, tot = st.tot, rem = tot - g;
+  const sym = st.lastSym || 0.008;
+  const symsPerPkt = st.plSize === PL4 ? 39 : (st.plSize === PL_FSK ? 272 : 44);
+  const pktDur = symsPerPkt * sym;
+
+  const elapsed = (Date.now() - st.startTime) / 1000;
+  const measuredPktsPerSec = (g &gt; 2 &amp;&amp; elapsed &gt; 0.2) ? (g / elapsed) : (1 / pktDur);
+  const effectivePktsPerSec = g &gt; 3 ? (0.75 * measuredPktsPerSec + 0.25 * (1 / pktDur)) : (1 / pktDur);
+
+  const etaSec = rem / Math.max(0.2, effectivePktsPerSec);
+  const bytesPerSec = effectivePktsPerSec * st.plSize;
+  const estTotalBytes = tot * st.plSize;
+
+  $(&#x27;rEtaBox&#x27;).hidden = false;
+  $(&#x27;rEta&#x27;).textContent = fmtTime(etaSec);
+  $(&#x27;rSpd&#x27;).textContent = fmt(Math.round(bytesPerSec)) + &#x27;/s&#x27;;
+  $(&#x27;rSz&#x27;).textContent = &#x27;~&#x27; + fmt(estTotalBytes);
+
+  const modeLabel = (st.lastD &amp;&amp; st.lastD.modeName)
+    ? st.lastD.modeName
+    : (st.plSize === PL4 ? `4-Tone OFDM (${Math.round(sym * 1000)}ms)` : `MFSK (${Math.round(sym * 1000)}ms)`);
+  $(&#x27;rInfo&#x27;).textContent = `Packet ${g} of ${tot} (${Math.round(100 * g / tot)}%) · ${modeLabel} · ~${fmtTime(etaSec)} left`;
+}
+
+function onPkt(b, sym, d, plSize){
+  const fid = b[0], idx = (b[1] &lt;&lt; 8) | b[2], tot = (b[3] &lt;&lt; 8) | b[4];
+  if(!tot || idx &gt;= tot) return;
+
+  if(st &amp;&amp; st.fid !== fid){
+    if(st.pf === fid) st.pc++; else { st.pf = fid; st.pc = 1; }
+    if(st.pc &lt; 2) return;
+  }
+
+  if(!st || st.fid !== fid || st.plSize !== plSize){
+    st = {
+      fid, tot, plSize,
+      got: new Map(),
+      done: false,
+      pc: 0,
+      startTime: Date.now(),
+      lastSym: sym,
+      lastD: d
+    };
+    const T = $(&#x27;tiles&#x27;); T.innerHTML = &#x27;&#x27;;
+    if(tot &lt;= 1500){
+      st.c = [];
+      for(let i = 0; i &lt; tot; i++){ const e = document.createElement(&#x27;span&#x27;); T.append(e); st.c.push(e); }
+    }
+    st.got.set(idx, b.slice(5, 5 + plSize));
+    if(st.c) st.c[idx].className = &#x27;on&#x27;;
+    $(&#x27;pb&#x27;).style.width = (100 / tot) + &#x27;%&#x27;;
+    updateReceiverTelemetry();
+    if(tot === 1){ st.done = true; fin(st); }
+    return;
+  }
+
+  if(st.tot !== tot || st.done) return;
+  st.got.set(idx, b.slice(5, 5 + plSize));
+  st.lastD = d;
+  st.lastSym = sym;
+  if(st.c) st.c[idx].className = &#x27;on&#x27;;
+
+  const g = st.got.size;
+  $(&#x27;pb&#x27;).style.width = (100 * g / tot) + &#x27;%&#x27;;
+  updateReceiverTelemetry();
+
+  if(g === tot){
+    st.done = true;
+    $(&#x27;rEta&#x27;).textContent = &#x27;0s&#x27;;
+    fin(st);
+  } else if(Date.now() - lastAck &gt; 3500){
+    sendAck(false);
+  }
+}
+
+function onFSKFrame(frame, dec){
+  if(frame.kind === &#x27;text&#x27;){
+    if(lastFskText === frame.text &amp;&amp; $(&#x27;out&#x27;).children.length &gt; 0) return;
+    lastFskText = frame.text;
+    $(&#x27;pb&#x27;).style.width = &#x27;100%&#x27;;
+    $(&#x27;rEta&#x27;).textContent = &#x27;0s&#x27;;
+    const data = new TextEncoder().encode(frame.text);
+    renderDecodedOutput(&#x27;message.txt&#x27;, data, dec.modeName, &#x27;0.1&#x27;);
+    return;
+  }
+
+  if(frame.kind === &#x27;pkt&#x27;){
+    const { fid, seq, tot, data } = frame;
+    if(!st || st.fid !== fid || st.tot !== tot || st.plSize !== PL_FSK || st.done){
+      st = {
+        fid, tot, plSize: PL_FSK,
+        got: new Map(),
+        done: false,
+        startTime: Date.now(),
+        lastSym: dec.sym,
+        lastD: dec
+      };
+      fskSeqMap.clear();
+      const T = $(&#x27;tiles&#x27;); T.innerHTML = &#x27;&#x27;;
+      if(tot &lt;= 1500){
+        st.c = [];
+        for(let i = 0; i &lt; tot; i++){ const e = document.createElement(&#x27;span&#x27;); T.append(e); st.c.push(e); }
+      }
+    }
+    if(!fskSeqMap.has(seq)){
+      fskSeqMap.set(seq, data);
+      st.got.set(seq, data);
+      st.lastSym = dec.sym;
+      st.lastD = dec;
+      if(st.c &amp;&amp; st.c[seq]) st.c[seq].className = &#x27;on&#x27;;
+      const g = st.got.size;
+      $(&#x27;pb&#x27;).style.width = (100 * g / tot) + &#x27;%&#x27;;
+      updateReceiverTelemetry();
+
+      if(g === tot){
+        st.done = true;
+        $(&#x27;rEta&#x27;).textContent = &#x27;0s&#x27;;
+        let totalLen = 0;
+        for(let i = 0; i &lt; tot; i++) totalLen += st.got.get(i).length;
+        const merged = new Uint8Array(totalLen);
+        let off = 0;
+        for(let i = 0; i &lt; tot; i++){ const chunk = st.got.get(i); merged.set(chunk, off); off += chunk.length; }
+        st.a = merged;
+        fin(st);
+      } else if(Date.now() - lastAck &gt; 3500){
+        sendAck(false);
+      }
+    }
+  }
+}
+
+async function fin(s){
+  try{
+    if(!s.a){
+      const n = s.tot, a = new Uint8Array(n * s.plSize);
+      for(let i = 0; i &lt; n; i++) a.set(s.got.get(i), i * s.plSize);
+      s.a = a;
+    }
+    const a = s.a, len = new DataView(a.buffer).getUint32(1);
+    let d = a.subarray(5, 5 + len);
+    if(a[0] &amp; 2){
+      const p = $(&#x27;rpass&#x27;).value;
+      try{
+        d = new Uint8Array(await crypto.subtle.decrypt(
+          { name: &#x27;AES-GCM&#x27;, iv: d.slice(8, 20) },
+          await deriveAesKey(p, d.slice(0, 8)),
+          d.slice(20)
+        ));
+      }catch(e){
+        $(&#x27;rInfo&#x27;).textContent = p ? &#x27;Wrong passphrase. Fix it and tap Unlock.&#x27; : &#x27;Encrypted file received. Enter passphrase and tap Unlock.&#x27;;
+        $(&#x27;bU&#x27;).hidden = false;
+        return;
+      }
+    }
+    $(&#x27;bU&#x27;).hidden = true;
+    if((a[0] &amp; 1) &amp;&amp; typeof DecompressionStream !== &#x27;undefined&#x27;){
+      d = new Uint8Array(await streamPipe(d, DecompressionStream));
+    }
+    const nl = d[0];
+    const name = new TextDecoder().decode(d.subarray(1, 1 + nl));
+    const data = d.subarray(1 + nl);
+    const elapsed = ((Date.now() - s.startTime) / 1000).toFixed(1);
+    const modeLabel = (s.lastD &amp;&amp; s.lastD.modeName) ? s.lastD.modeName : &#x27;Acoustic Link&#x27;;
+    renderDecodedOutput(name, data, modeLabel, elapsed);
+    $(&#x27;pR&#x27;).classList.remove(&#x27;live&#x27;);
+
+    let k = 0;
+    const iv = setInterval(() =&gt; {
+      if(!ackBusy &amp;&amp; k &lt; 3){ sendAck(true); k++; }
+      else if(k &gt;= 3 &amp;&amp; !ackBusy){ clearInterval(iv); setTimeout(() =&gt; stopR(true), 600); }
+    }, 450);
+  }catch(e){
+    $(&#x27;rInfo&#x27;).textContent = &#x27;Received all packets but could not unpack file. Try again.&#x27;;
+    st = null;
+  }
+}
+
+function stopR(keep){
+  try{ clearInterval(rTimer); ms &amp;&amp; ms.getTracks().forEach(t =&gt; t.stop()); rc &amp;&amp; rc.close(); }catch(e){}
+  rc = ms = an = rTimer = null; decs = []; fskDecs = [];
+  $(&#x27;bL&#x27;).hidden = false;
+  $(&#x27;bY&#x27;).hidden = true;
+  $(&#x27;pR&#x27;).classList.remove(&#x27;live&#x27;);
+  $(&#x27;specTag&#x27;).textContent = &#x27;Idle&#x27;;
+  if(!keep){ $(&#x27;rInfo&#x27;).textContent = &#x27;Stopped.&#x27;; $(&#x27;rEtaBox&#x27;).hidden = true; }
+}
+
+$(&#x27;bL&#x27;).addEventListener(&#x27;click&#x27;, async () =&gt; {
+  try{ ms = await navigator.mediaDevices.getUserMedia(MIC); }
+  catch(e){ $(&#x27;rInfo&#x27;).textContent = &#x27;Microphone blocked or unavailable. Allow mic access in browser settings.&#x27;; return; }
+
+  st = null; fskSeqMap.clear(); lastFskText = &#x27;&#x27;;
+  $(&#x27;out&#x27;).innerHTML = &#x27;&#x27;; $(&#x27;tiles&#x27;).innerHTML = &#x27;&#x27;; $(&#x27;pb&#x27;).style.width = &#x27;0%&#x27;; $(&#x27;rEtaBox&#x27;).hidden = true;
+  wake();
+  rc = new (window.AudioContext || window.webkitAudioContext)();
+  if(rc.state === &#x27;suspended&#x27;) await rc.resume();
+
+  const s = rc.createMediaStreamSource(ms);
+  const hp = rc.createBiquadFilter(); hp.type = &#x27;highpass&#x27;; hp.frequency.value = 400;
+  an = rc.createAnalyser();
+  an.fftSize = 2048;
+  an.smoothingTimeConstant = 0.65;
+  $(&#x27;specTag&#x27;).textContent = &#x27;Live Mic&#x27;;
+
+  fskDecs = [
+    new DecFSK(rc.sampleRate, FSK_FAST_CFG, onFSKFrame),
+    new DecFSK(rc.sampleRate, FSK_CLASSIC_CFG, onFSKFrame)
+  ];
+
+  decs = [
+    new Dec4(rc.sampleRate, 0.008, onPkt),
+    new Dec4(rc.sampleRate, 0.014, onPkt),
+    new Dec4(rc.sampleRate, 0.026, onPkt),
+    ...fskDecs,
+    new Dec1(rc.sampleRate, 0.050, onPkt, WIDE1),
+    ...CENT.map(c =&gt; new Dec1(rc.sampleRate, 0.300, onPkt, nt(c, 0.300)))
+  ];
+
+  const sp = rc.createScriptProcessor(4096, 1, 1);
+  const mute = rc.createGain();
+  mute.gain.value = 0;
+  let prevPeak = 0;
+  sp.onaudioprocess = e =&gt; {
+    const d = e.inputBuffer.getChannelData(0);
+    let m = 0;
+    for(let i = 0; i &lt; d.length; i += 16) m = Math.max(m, Math.abs(d[i]));
+    $(&#x27;lv&#x27;).style.width = Math.min(100, m * 300) + &#x27;%&#x27;;
+    for(const x of decs) x.push(d);
+    if(prevPeak &gt; 0.035 &amp;&amp; m &lt; 0.012){
+      for(const fd of fskDecs) fd.scanRecent();
+    }
+    prevPeak = m;
+  };
+  s.connect(hp); hp.connect(an); hp.connect(sp); sp.connect(mute); mute.connect(rc.destination);
+
+  rTimer = setInterval(() =&gt; { if(st &amp;&amp; !st.done) updateReceiverTelemetry(); }, 1000);
+  $(&#x27;bL&#x27;).hidden = true;
+  $(&#x27;bY&#x27;).hidden = false;
+  $(&#x27;pR&#x27;).classList.add(&#x27;live&#x27;);
+  $(&#x27;rInfo&#x27;).textContent = &#x27;Listening… waiting for OFDM, MFSK, or 3-Tone FSK signal.&#x27;;
+});
+
+$(&#x27;bY&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; stopR(false));
+$(&#x27;bU&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; st &amp;&amp; fin(st));
+
+// Offline Loopback Self-Test
+$(&#x27;bTest&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+  const sr = 44100;
+  $(&#x27;rInfo&#x27;).textContent = &#x27;Running offline loopback test on OFDM + FSK…&#x27;;
+  let gotOfdm = false, gotFskHyper = false, gotFskClassic = false;
+
+  const d4 = new Dec4(sr, 0.008, b =&gt; { if(b[0] === 91) gotOfdm = true; });
+  const dFskH = new DecFSK(sr, FSK_FAST_CFG, frame =&gt; { if(frame.kind === &#x27;text&#x27; &amp;&amp; frame.text === &#x27;FSK_HYPER_OK&#x27;) gotFskHyper = true; });
+  const dFskC = new DecFSK(sr, FSK_CLASSIC_CFG, frame =&gt; { if(frame.kind === &#x27;text&#x27; &amp;&amp; frame.text === &#x27;FSK_CLASSIC_OK&#x27;) gotFskClassic = true; });
+
+  const pkt4 = mkPkt(91, 1, 0, new TextEncoder().encode(&#x27;OFDM_FAST_TEST&#x27;), PL4);
+  const wav4 = renderAudio([{ b: pkt4, sym: 0.008, chords: true }], sr);
+  const wavFskH = synthFSK(fskShortTextSymbols(&#x27;FSK_HYPER_OK&#x27;), FSK_FAST_CFG.sym, FSK_FAST_CFG.f0, FSK_FAST_CFG.f1, FSK_FAST_CFG.fsy, sr);
+  const wavFskC = synthFSK(fskShortTextSymbols(&#x27;FSK_CLASSIC_OK&#x27;), FSK_CLASSIC_CFG.sym, FSK_CLASSIC_CFG.f0, FSK_CLASSIC_CFG.f1, FSK_CLASSIC_CFG.fsy, sr);
+
+  for(let i = 0; i &lt; wav4.length; i += 4096) d4.push(wav4.subarray(i, Math.min(wav4.length, i + 4096)));
+  for(let i = 0; i &lt; wavFskH.length; i += 4096) dFskH.push(wavFskH.subarray(i, Math.min(wavFskH.length, i + 4096)));
+  for(let i = 0; i &lt; wavFskC.length; i += 4096) dFskC.push(wavFskC.subarray(i, Math.min(wavFskC.length, i + 4096)));
+  dFskH.scanRecent();
+  dFskC.scanRecent();
+
+  const allPass = gotOfdm &amp;&amp; gotFskHyper &amp;&amp; gotFskClassic;
+  $(&#x27;rInfo&#x27;).textContent = `Loopback complete: OFDM=${gotOfdm ? &#x27;PASS ✓&#x27; : &#x27;FAIL&#x27;}, FSK Hyper=${gotFskHyper ? &#x27;PASS ✓&#x27; : &#x27;FAIL&#x27;}, FSK Classic=${gotFskClassic ? &#x27;PASS ✓&#x27; : &#x27;FAIL&#x27;}.`;
+  if(allPass) burstConfetti();
+});
+
+// Tab Switching
+const switchTab = sendActive =&gt; {
+  $(&#x27;pS&#x27;).hidden = !sendActive;
+  $(&#x27;pR&#x27;).hidden = sendActive;
+  $(&#x27;tS&#x27;).classList.toggle(&#x27;on&#x27;, sendActive);
+  $(&#x27;tR&#x27;).classList.toggle(&#x27;on&#x27;, !sendActive);
+};
+$(&#x27;tS&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; switchTab(true));
+$(&#x27;tR&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; switchTab(false));
+&lt;/script&gt;
+&lt;style&gt;.tabs{display:none!important}&lt;/style&gt;&lt;script&gt;document.getElementById(&quot;tR&quot;).click()&lt;/script&gt;&lt;/body&gt;
+&lt;/html&gt;"></iframe></div></div>
+</div></div></section>
+
+<section id="improve"><h2>How we can<br>improve it further</h2>
+<p class="lede">The studio works today. These are the upgrades that would make it ready for airports and disaster zones.</p>
+<div class="grid">
+<article class="uc"><span class="ic">Reliability</span><h3>Error correction</h3><p>Stronger checksums so a loud terminal or a storm does not corrupt a message.</p></article>
+<article class="uc"><span class="ic">Reach</span><h3>Phone-to-phone relay</h3><p>Receivers re-broadcast what they heard, so one speaker can cover a whole concourse or town.</p></article>
+<article class="uc"><span class="ic">Trust</span><h3>Signed alerts</h3><p>Only verified authorities can send warnings, so a fake broadcast is rejected.</p></article>
+<article class="uc"><span class="ic">Comfort</span><h3>Near-silent mode</h3><p>Ultrasonic transmission for places where an audible tone would disturb people.</p></article>
+<article class="uc"><span class="ic">Access</span><h3>Languages and accessibility</h3><p>Auto-translated alerts, large text, vibration and screen-reader support.</p></article>
+<article class="uc"><span class="ic">Integration</span><h3>Airport and alert systems</h3><p>Feed flight data and public-warning feeds straight into the broadcast.</p></article>
+</div></section>
+
+<section class="team" id="team"><h2>The team</h2>
+<div class="grid tm"><div class="m"><b>Pranav Rakshith.M</b></div><div class="m"><b>V P Dushyanth Kumar</b></div><div class="m"><b>Muralidhar H</b></div><div class="m"><b>Charith Anil</b></div></div></section>
+<footer><span>SoundDrop · Data over sound</span></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+// headline letter reveal (the one load moment)
+var h=document.getElementById('h1'),d=0,out='';
+h.innerHTML='<span aria-hidden="true">'+h.innerHTML.split('<br>').map(function(w){return w.split('').map(function(c){return c==' '?' ':'<span class="ch" style="animation-delay:'+(d+=.035)+'s">'+c+'</span>'}).join('')}).join('<br>')+'</span>';
+// tilt cards
+document.querySelectorAll('.uc').forEach(function(c){
+ c.addEventListener('pointermove',function(e){var r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform='rotateY('+x*14+'deg) rotateX('+-y*14+'deg)'});
+ c.addEventListener('pointerleave',function(){c.style.transform=''})});
+if(!window.THREE)return;
+var cv=document.getElementById('gl'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+R.setPixelRatio(Math.min(devicePixelRatio,1.75));
+var S=new THREE.Scene(),C=new THREE.PerspectiveCamera(42,1,.1,100);C.position.set(0,1.2,10);
+function size(){R.setSize(innerWidth,innerHeight,false);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}size();addEventListener('resize',size);
+var P=new THREE.Group();S.add(P);
+function wm(c,o){return new THREE.MeshBasicMaterial({color:c,wireframe:true,transparent:true,opacity:o||1})}
+var i;
+// signal tower
+var TW=new THREE.Group();TW.scale.setScalar(.8);P.add(TW);
+[[1.4,.8,.55,-1.9],[1.4,.55,.36,-.5],[1.4,.36,.2,.9]].forEach(function(s,j){
+ var m=new THREE.Mesh(new THREE.CylinderGeometry(s[2],s[1],s[0],4,3,true),wm(j%2?0x22d3ee:0xf3efe6,.9));m.rotation.y=Math.PI/4;m.position.y=s[3];TW.add(m);
+ var pf=new THREE.Mesh(new THREE.TorusGeometry(s[2]+.08,.025,6,4),new THREE.MeshBasicMaterial({color:0x8b5cf6}));pf.rotation.x=Math.PI/2;pf.rotation.z=Math.PI/4;pf.position.y=s[3]+s[0]/2;TW.add(pf)});
+var mast=new THREE.Mesh(new THREE.CylinderGeometry(.03,.05,1.7,6),new THREE.MeshBasicMaterial({color:0xf3efe6}));mast.position.y=2.45;TW.add(mast);
+[[.45,.95,Math.PI/2],[-.35,-.4,-Math.PI/2]].forEach(function(d){var ds=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8,0,Math.PI*2,0,Math.PI/2),wm(0xec4899,.9));ds.rotation.z=d[2];ds.position.set(d[0],d[1],0);TW.add(ds)});
+var pad=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.55,.15,28,1),wm(0x8b5cf6,.6));pad.position.y=-2.65;TW.add(pad);
+var tip=new THREE.Mesh(new THREE.SphereGeometry(.1,14,14),new THREE.MeshBasicMaterial({color:0xf59e0b}));tip.position.y=3.35;TW.add(tip);
+// expanding signal shells from the tip
+var rings=[];for(i=0;i<6;i++){var rg=new THREE.Mesh(new THREE.SphereGeometry(1,24,14),wm(0x22d3ee,1));rg.position.set(0,3.35,0);rg.userData.o=i/6;TW.add(rg);rings.push(rg)}
+// room-scale wave dust
+var N=1800,pos=new Float32Array(N*3),base=[];
+for(i=0;i<N;i++){var a=Math.random()*6.283,rr=3+Math.random()*9;pos[i*3]=Math.cos(a)*rr;pos[i*3+1]=(Math.random()-.5)*7;pos[i*3+2]=Math.sin(a)*rr-3;base.push(pos[i*3],pos[i*3+2])}
+var pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+var pts=new THREE.Points(pg,new THREE.PointsMaterial({size:.035,color:0xf3efe6,transparent:true,opacity:.7}));S.add(pts);
+var mx=0,my=0;addEventListener('pointermove',function(e){mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5});
+function cl(v){return Math.max(0,Math.min(1,v))}function rnd(s){s=Math.sin(s*127.1)*43758.5453;return s-Math.floor(s)}
+var M=function(c,o){return new THREE.MeshBasicMaterial({color:c,transparent:o!=null,opacity:o==null?1:o})};
+function person(){var g=new THREE.Group(),b=new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.7,8),M(0x5b6aa8)),h=new THREE.Mesh(new THREE.SphereGeometry(.14,10,8),M(0x5b6aa8)),ph=new THREE.Mesh(new THREE.BoxGeometry(.1,.17,.02),M(0x222a55));
+ b.position.y=.35;h.position.y=.88;ph.position.set(.15,.55,.12);g.add(b,h,ph);g.userData={b:b,h:h,ph:ph,lit:0};return g}
+function crowd(G,n,r0,r1,seed){var a=[];for(var q=0;q<n;q++){var p=person(),an=rnd(q+seed)*6.283,r=r0+rnd(q*3+seed)*(r1-r0);p.position.set(Math.cos(an)*r,0,Math.sin(an)*r);p.rotation.y=-an+1.5;p.userData.d=r;G.add(p);a.push(p)}return a}
+function waves(G){var a=[];for(var q=0;q<3;q++){var r=new THREE.Mesh(new THREE.TorusGeometry(1,.025,6,72),M(0x22d3ee,0));r.rotation.x=Math.PI/2;r.position.y=.12;G.add(r);a.push(r)}return a}
+S.add(new THREE.AmbientLight(0xaab4e8,.9));var dl_=new THREE.DirectionalLight(0xffffff,.85);dl_.position.set(6,12,8);S.add(dl_);
+function box(w,h,d,c,x,y,z,par){var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:c}));m.position.set(x,y,z);par.add(m);return m}
+function jet(){var g=new THREE.Group(),w=new THREE.MeshLambertMaterial({color:0xf3efe6}),v=new THREE.MeshLambertMaterial({color:0x8b5cf6});
+ var f=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,5,16),w);f.rotation.z=Math.PI/2;g.add(f);
+ var n=new THREE.Mesh(new THREE.SphereGeometry(.5,16,12),w);n.scale.set(2,1,1);n.position.x=2.5;g.add(n);
+ var tl=new THREE.Mesh(new THREE.ConeGeometry(.5,1.6,16),w);tl.rotation.z=Math.PI/2;tl.position.x=-3.3;g.add(tl);
+ box(1.3,.08,6.4,0xd9dcef,.2,-.2,0,g);box(.7,.06,2.3,0xd9dcef,-3,.1,0,g);var fn=box(1,1.1,.08,0x8b5cf6,-3,.75,0,g);fn.rotation.z=.35;
+ box(5,.06,.01,0x8b5cf6,0,.05,.505,g);box(5,.06,.01,0x8b5cf6,0,.05,-.505,g);
+ [-1.7,1.7].forEach(function(z){var e=new THREE.Mesh(new THREE.CylinderGeometry(.25,.28,1,12),v);e.rotation.z=Math.PI/2;e.position.set(.5,-.5,z);g.add(e)});return g}
+// airport: terminal, apron, runway, tower, planes
+var GA=new THREE.Group();S.add(GA);
+box(30,.05,22,0x151c3f,0,-.03,0,GA);GA.add(new THREE.GridHelper(26,26,0x8b5cf6,0x2a3470));
+box(64,.04,22,0x1b2147,0,-.02,-19,GA);box(70,.05,4,0x0b0f26,0,0,-19,GA);
+for(i=-11;i<=11;i++)box(1.4,.06,.14,0xf3efe6,i*3,.02,-19,GA);
+var lg=new THREE.SphereGeometry(.09,6,6),lm=M(0xf59e0b);for(i=-17;i<=17;i++)[-16.9,-21.1].forEach(function(z){var l=new THREE.Mesh(lg,lm);l.position.set(i*2,.1,z);GA.add(l)});
+var gc=document.createElement('canvas');gc.width=256;gc.height=64;var gx=gc.getContext('2d'),gr=gx.createLinearGradient(0,0,0,64);gr.addColorStop(0,'#7cc6f2');gr.addColorStop(1,'#1c3a6e');gx.fillStyle=gr;gx.fillRect(0,0,256,64);gx.strokeStyle='#dfe6ff';gx.lineWidth=3;for(i=0;i<=8;i++){gx.beginPath();gx.moveTo(i*32,0);gx.lineTo(i*32,64);gx.stroke()}gx.strokeRect(0,0,256,64);
+var gt=new THREE.CanvasTexture(gc);gt.wrapS=THREE.RepeatWrapping;gt.repeat.set(2,1);
+var tm=M(0x9aa3c7);var trm=new THREE.Mesh(new THREE.BoxGeometry(18,3.4,3),[tm,tm,tm,tm,new THREE.MeshBasicMaterial({map:gt}),tm]);trm.position.set(0,1.7,-9.5);GA.add(trm);
+box(19,.3,4.6,0xe8e4f5,0,3.55,-9.5,GA);
+var tw=new THREE.Mesh(new THREE.CylinderGeometry(.5,.7,8,10),new THREE.MeshLambertMaterial({color:0xcfd3e6}));tw.position.set(17,4,-24);GA.add(tw);
+var tc=new THREE.Mesh(new THREE.CylinderGeometry(1.2,.85,1.2,12),new THREE.MeshBasicMaterial({color:0x7cc6f2}));tc.position.set(17,8.6,-24);GA.add(tc);box(2.8,.2,2.8,0xe8e4f5,17,9.3,-24,GA);
+box(5.2,.7,.7,0xcfd3e6,-11.6,1.9,-12.2,GA);
+for(i=0;i<6;i++){box(1.6,.8,.7,0xe8e4f5,-7.5+i*3,.4,-5.5,GA);box(1.7,.1,.8,0xf59e0b,-7.5+i*3,.85,-5.5,GA)}
+var pl=jet();pl.scale.setScalar(1.25);pl.position.set(-14,1.4,-13.8);GA.add(pl);var pl2=jet();pl2.scale.setScalar(1.25);pl2.position.set(12.5,1.4,-14.5);pl2.rotation.y=.15;GA.add(pl2);
+var bc=document.createElement('canvas');bc.width=512;bc.height=192;var bx=bc.getContext('2d'),btex=new THREE.CanvasTexture(bc),dl=-1;
+function board(s){if(dl===s)return;dl=s;bx.fillStyle='#0a0f24';bx.fillRect(0,0,512,192);bx.strokeStyle='#8b5cf6';bx.lineWidth=5;bx.strokeRect(4,4,504,184);bx.fillStyle='#f3efe6';bx.font='800 56px Arial';bx.fillText('FLIGHT SD 204',24,70);bx.font='600 26px Arial';bx.fillStyle='#9aa3c7';bx.fillText('DUBAI',24,104);
+ bx.font='800 44px Arial';bx.fillStyle=['#34d399','#f59e0b','#22d3ee'][s];bx.fillText(['ON TIME 17:50','DELAYED 18:35','NOW DEPARTING'][s],24,156);bx.font='700 28px Arial';bx.fillStyle='#f3efe6';bx.fillText(s?'GATE B9':'GATE B7',372,104);btex.needsUpdate=true}board(0);
+var bd=new THREE.Mesh(new THREE.PlaneGeometry(7.4,2.8),new THREE.MeshBasicMaterial({map:btex}));bd.position.set(0,4.6,-6);GA.add(bd);box(.06,2,.06,0xcfd3e6,-3.2,6.4,-6,GA);box(.06,2,.06,0xcfd3e6,3.2,6.4,-6,GA);
+var pA=crowd(GA,30,2,9,1),wA=waves(GA);pA.forEach(function(p){if(p.position.z<-4)p.position.z*=-1});
+// emergency: realistic buildings
+var GE=new THREE.Group();S.add(GE);box(30,.05,30,0x151c3f,0,-.03,0,GE);GE.add(new THREE.GridHelper(26,26,0x22d3ee,0x2a3470));
+var wtx=[];for(i=0;i<6;i++){var kc=document.createElement('canvas');kc.width=128;kc.height=64;var kx=kc.getContext('2d');kx.fillStyle=['#7a82a8','#9a8ca0','#6a8aa0'][i>>1];kx.fillRect(0,0,128,64);for(var q=0;q<4;q++){kx.fillStyle=rnd(i*13+q)>.5?'#ffd37a':'#18204a';kx.fillRect(8+q*30,12,20,32)}kx.fillStyle='rgba(0,0,0,.25)';kx.fillRect(0,56,128,8);wtx.push(new THREE.CanvasTexture(kc))}
+var BL=[],fg=new THREE.BoxGeometry(1,.55,1);
+for(i=0;i<14;i++){var an=i/14*6.283+rnd(i)*.15,r=i%2?7.2:9.8,nn=4+Math.floor(rnd(i+9)*6),w=1.1+rnd(i+3)*.7,b={fl:[],cj:.08+rnd(i+5)*.5,x:Math.cos(an)*r,z:Math.sin(an)*r,n:nn};
+ for(var k=0;k<nn;k++){var m=new THREE.Mesh(fg,new THREE.MeshLambertMaterial({map:wtx[(i%3)*2+(k%2)]}));m.scale.set(w,1,w);m.position.set(b.x,k*.55+.275,b.z);m.userData={y0:k*.55+.275,rx:rnd(i*9+k),rz:rnd(i*7+k+3),k:k};GE.add(m);b.fl.push(m)}BL.push(b)}
+var dN=140,dp=new Float32Array(dN*3),dg=new THREE.BufferGeometry();dg.setAttribute('position',new THREE.BufferAttribute(dp,3));var dust=new THREE.Points(dg,new THREE.PointsMaterial({size:.6,color:0xb8a99a,transparent:true,opacity:.45,depthWrite:false}));dust.frustumCulled=false;GE.add(dust);
+var tw2=new THREE.Mesh(new THREE.CylinderGeometry(.12,.25,4,8),M(0xf3efe6,.8));tw2.position.y=2;GE.add(tw2);
+var bcn=new THREE.Mesh(new THREE.SphereGeometry(.3,14,14),M(0xf43f5e));bcn.position.y=4.3;GE.add(bcn);
+var wt=new THREE.Mesh(new THREE.PlaneGeometry(26,26,36,36),wm(0x22d3ee,.55));wt.rotation.x=-Math.PI/2;GE.add(wt);var wp=wt.geometry.attributes.position;
+var pE=crowd(GE,22,1.5,4.5,50),wE=waves(GE);
+// disaster content
+var mode='flood',DD={flood:{t:'Flood warning',s:'Water is rising in your area',tx:"Cell towers fail or clog first. A siren tower can still broadcast, and every phone nearby receives the do's and don'ts. Scroll to watch the water rise and the warning go out.",d:['Move to higher ground now','Switch off mains power if it is safe','Keep your phone charged'],n:['Walk or drive through floodwater','Touch wet electrical equipment','Return home until cleared']},quake:{t:'Earthquake alert',s:'Strong shaking detected nearby',tx:"Shaking can cut networks in seconds. A siren tower can still broadcast, and every phone nearby receives the do's and don'ts. Scroll to watch the buildings shake and the warning go out.",d:['Drop, cover and hold on','Stay away from windows','Use the stairs once it stops'],n:['Run outside while it shakes','Use the lifts','Light flames near gas smells']}};
+var ph1=document.getElementById('ph1'),ph2=document.getElementById('ph2');
+function fill(){var o=DD[mode];document.getElementById('ptit').textContent=o.t;document.getElementById('psub').textContent=o.s;document.getElementById('dtxt').textContent=o.tx;
+ ['dos','donts'].forEach(function(id,j){document.getElementById(id).innerHTML=(j?o.n:o.d).map(function(x,k){return '<li class="a" style="--i:'+(k+2)+'">'+x+'</li>'}).join('')})}
+function setMode(m){mode=m;mf.setAttribute('aria-pressed',m=='flood');mq.setAttribute('aria-pressed',m!='flood');fill();wt.visible=m=='flood'}
+var mf=document.getElementById('mf'),mq=document.getElementById('mq');mf.onclick=function(){setMode('flood')};mq.onclick=function(){setMode('quake')};setMode('flood');
+function lit(arr,WR,t,go){arr.forEach(function(p,j){var u=p.userData,on=go&&u.d<WR?1:0;u.lit+=(on-u.lit)*.2;var k=u.lit>.5;u.ph.material.color.setHex(k?0xf59e0b:0x222a55);u.b.material.color.setHex(k?0x22d3ee:0x5b6aa8);u.h.material.color.setHex(k?0x22d3ee:0x5b6aa8);u.ph.scale.setScalar(1+u.lit*1.3);p.position.y=Math.abs(Math.sin(t*4+j))*.07*u.lit})}
+function ringw(ws,WR,bt){ws.forEach(function(r,k){var s=Math.max(.01,WR-k*1.7);r.scale.setScalar(s);r.material.opacity=bt>0&&bt<1?.85*(1-bt*.7):0})}
+var secs=['top','airport','disaster','studio','improve','team'].map(function(x){return document.getElementById(x)}),gs=[1,0,0],ly=0,lz=0,cy=1.2,cz=10,t0=performance.now();
+function loop(now){var t=(now-t0)/1000,a=0,narrow=innerWidth<760;
+ secs.forEach(function(s,j){if(s.getBoundingClientRect().top<innerHeight*.5)a=j});
+ var rc=secs[a].getBoundingClientRect(),sp=cl(-rc.top/Math.max(1,rc.height-innerHeight));
+ [P,GA,GE].forEach(function(g,j){gs[j]+=((a==j?1:0)-gs[j])*.08;g.visible=gs[j]>.02;g.scale.setScalar(Math.max(.001,gs[j]))});
+ var ty=a<1?1.2:a<3?5.4:3,tz=(a<1?10:a<3?14:18)+(narrow&&a>0&&a<3?5:0);if(narrow&&a==0)tz=13;
+ if(a==1){ty=5.2;tz=15.5+(narrow?4:0)}cy+=(ty-cy)*.05;cz+=(tz-cz)*.05;C.position.set(mx*1.2,cy-my*.6,cz);ly+=((a==1?1.4:a==2?(narrow?-.8:.6):0)-ly)*.05;lz+=((a==1?-6:0)-lz)*.05;C.lookAt(0,ly,lz);
+ var hp=cl(scrollY/innerHeight);P.position.set(0,narrow?1:.2+Math.sin(t)*.06,0);P.rotation.y=-.55+hp*Math.PI*1.3+mx*.5;P.rotation.x=my*.25;P.rotation.z=Math.sin(t*.6)*.04;
+ rings.forEach(function(r){var u=(t*.35+r.userData.o)%1;r.scale.setScalar(.2+u*5);r.material.opacity=(1-u)*.7;r.rotation.y=Math.PI/2});
+ if(gs[1]>.02){var bt=cl((sp-.22)/.4),WR=bt*16,tk=cl((sp-.68)/.3);GA.rotation.y=-.1+mx*.15;ringw(wA,WR,bt);lit(pA,WR,t,bt>0);board(tk>0?2:bt>.35?1:0);
+  var tt=cl(tk/.25),rr=cl((tk-.25)/.75),lf=Math.pow(cl((rr-.35)/.65),1.5);
+  pl.position.set(tk<.25?-14+5*tt:-9+14*Math.pow(rr,1.3),1.4+lf*20,-13.8-5.2*Math.sin(tt*Math.PI/2)-lf*8);pl.rotation.y=.8*Math.sin(tt*Math.PI);pl.rotation.z=.45*cl((rr-.3)/.2)}
+ if(gs[2]>.02){var bt2=cl((sp-.52)/.3),W2=bt2*12,fl=mode=='flood',c=fl?0:cl((sp-.08)/.4),q=fl||c>=1?0:1;GE.rotation.y=-.4+sp*.5+mx*.3;
+  ringw(wE,W2,bt2);lit(pE,W2,t,bt2>0);bcn.scale.setScalar(1+(bt2>0&&bt2<1?Math.sin(t*14)*.3:0));
+  wt.position.y=-.6+cl(sp/.4)*1.5;if(fl)for(var v=0;v<wp.count;v++){wp.setZ(v,Math.sin(wp.getX(v)*.7+t*2)*.1+Math.cos(wp.getY(v)*.6+t*1.6)*.1)}wp.needsUpdate=true;
+  GE.position.x=Math.sin(t*55)*q*.1;
+  BL.forEach(function(b){b.fl.forEach(function(m){var d=m.userData,u=fl?0:cl((c-b.cj-d.k*.012)/.28),u2=u*u;
+   m.position.set(b.x+(d.rz-.5)*u*1.8+Math.sin(t*50+d.k)*.025*q,d.y0+(.12+(d.k%3)*.06-d.y0)*u2,b.z+(d.rx-.5)*u*1.8);
+   m.rotation.z=(d.rz-.5)*u*1.6+Math.sin(t*38+b.cj*9)*.012*q*d.k/b.n;m.rotation.x=(d.rx-.5)*u*1.3;m.scale.y=1-.45*u2})});
+  for(var z=0;z<dN;z++){var ob=BL[z%14],ub=fl?0:cl((c-ob.cj)/.3);dp[z*3]=ob.x+(rnd(z)-.5)*2.6*(1+ub);dp[z*3+1]=ub>0?.3+ub*rnd(z+1)*3.5:-50;dp[z*3+2]=ob.z+(rnd(z+2)-.5)*2.6*(1+ub)}dg.attributes.position.needsUpdate=true}
+ ph1.classList.toggle('on',a==1&&sp>.5);ph2.classList.toggle('on',a==2&&sp>.6);
+ var ps=pg.attributes.position.array;for(var z=0;z<N;z++){ps[z*3+1]+=Math.sin(t*1.2+base[z*2]*.6+base[z*2+1]*.4)*.004}pg.attributes.position.needsUpdate=true;pts.rotation.y=t*.02+scrollY*.0004;
+ R.render(S,C);requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+})();
+</script></body></html>
